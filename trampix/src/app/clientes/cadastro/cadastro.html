@@ -1,0 +1,51 @@
+<main class="pagina">
+  <mat-card appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>Cadastro Cliente</mat-card-title>
+      <mat-card-subtitle>
+        Preencha os dados para criar sua conta
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <mat-form-field appearance="outline">
+        <mat-label>CPF ou RG</mat-label>
+        <input matInput name="cpf" required [(ngModel)]="cpf">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Nome completo</mat-label>
+        <input matInput name="nome" required [(ngModel)]="nome">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>E-mail para cadastro</mat-label>
+        <input matInput type="email" name="email" required [(ngModel)]="email">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Crie uma senha</mat-label>
+        <input matInput type="password" name="senha" required [(ngModel)]="senha">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Confirme a senha</mat-label>
+        <input matInput type="password" name="confirmarSenha" required [(ngModel)]="confirmarSenha">
+      </mat-form-field>
+
+      @if (mensagem) {
+        <p role="status">{{ mensagem }}</p>
+      }
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button mat-button type="button" (click)="limpar()">
+        Limpar
+      </button>
+      <button mat-flat-button type="button"
+              [disabled]="!nome.trim()" (click)="salvar()">
+        Cadastrar
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</main>
