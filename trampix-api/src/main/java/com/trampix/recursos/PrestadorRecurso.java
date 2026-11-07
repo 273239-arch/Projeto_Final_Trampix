@@ -3,6 +3,7 @@ package com.trampix.recursos;
 import java.math.BigDecimal;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +24,7 @@ import com.trampix.repositorios.CategoriaRepositorio;
 import com.trampix.repositorios.PrestadorPerfilRepositorio;
 import com.trampix.repositorios.ServicoRepositorio;
 import com.trampix.repositorios.UsuarioRepositorio;
+import com.trampix.seguranca.Permissoes;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
@@ -34,7 +36,7 @@ import jakarta.validation.constraints.Size;
 
 // Decisão: o usuário vira prestador ao cadastrar o primeiro serviço.
 // Este recurso cria, numa só transação, o prestador_perfil e esse primeiro serviço.
-// TODO(segurança): com JWT, usar o usuário logado em vez do {usuarioId} da URL.
+// Exige token. Só o próprio usuário (ou um ADMIN) vê o perfil de prestador ou torna a conta {usuarioId} prestadora.
 @RestController
 @RequestMapping("/usuarios/{usuarioId}/prestador")
 public class PrestadorRecurso {
@@ -69,7 +71,8 @@ public class PrestadorRecurso {
     }
 
     @GetMapping
-    public PrestadorPerfil buscar(@PathVariable Long usuarioId) {
+    public PrestadorPerfil buscar(@PathVariable Long usuarioId, @AuthenticationPrincipal Usuario logado) {
+        Permissoes.exigirProprioOuAdmin(logado, usuarioId);
         return prestadorRepositorio.findByUsuarioId(usuarioId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "este usuário não é prestador"));
     }
@@ -77,7 +80,9 @@ public class PrestadorRecurso {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Transactional
-    public Servico tornarPrestador(@PathVariable Long usuarioId, @Valid @RequestBody TornarPrestadorRequisicao requisicao) {
+    public ServicoResposta tornarPrestador(@PathVariable Long usuarioId,
+            @Valid @RequestBody TornarPrestadorRequisicao requisicao, @AuthenticationPrincipal Usuario logado) {
+        Permissoes.exigirProprioOuAdmin(logado, usuarioId);
         Usuario usuario = usuarioRepositorio.findById(usuarioId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "usuário não encontrado"));
         if (usuario.getStatus() != StatusUsuario.ATIVO) {
@@ -104,6 +109,6 @@ public class PrestadorRecurso {
         servico.setDescricao(dados.descricao());
         servico.setPreco(dados.preco());
         servico.setTipoCobranca(dados.tipoCobranca());
-        return servicoRepositorio.save(servico);
+        return ServicoResposta.de(servicoRepositorio.save(servico));
     }
 }

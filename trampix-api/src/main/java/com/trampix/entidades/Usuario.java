@@ -2,6 +2,7 @@ package com.trampix.entidades;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Locale;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -55,7 +56,7 @@ public class Usuario {
     @Column(nullable = false, length = 120)
     private String nome;
 
-    // TODO(decisão aberta): login por e-mail. O Figma usa "nome de usuário".
+    // Login é por e-mail (decisão fechada). Guardado em minúsculas: o login não diferencia maiúsculas.
     @NotBlank
     @Email
     @Size(max = 160)
@@ -76,17 +77,18 @@ public class Usuario {
     // Só dígitos (o setter tira a máscara). CPF tem 11 dígitos e CNPJ tem 14.
     // @CPF ou @CNPJ confere os dígitos verificadores, conforme o tipoDocumento
     // (quem escolhe qual dos dois vale é a classe ValidacaoDocumento).
-    @NotBlank
+    // Obrigatório para USUARIO. O ADMIN de sistema (criado pelo CriadorAdmin) não tem documento.
+    @NotBlank(groups = ValidacaoDocumento.Obrigatorio.class)
     @Pattern(regexp = "\\d{11}|\\d{14}", message = "documento deve ter 11 (CPF) ou 14 (CNPJ) dígitos")
-    @CPF(groups = ValidacaoDocumento.Cpf.class)
-    @CNPJ(groups = ValidacaoDocumento.Cnpj.class)
-    @Column(nullable = false, unique = true, length = 14, columnDefinition = "CHAR(14)")
+    @CPF(groups = ValidacaoDocumento.Cpf.class, message = "CPF inválido")
+    @CNPJ(groups = ValidacaoDocumento.Cnpj.class, message = "CNPJ inválido")
+    @Column(unique = true, length = 14, columnDefinition = "CHAR(14)")
     private String documento;
 
-    @NotNull
+    @NotNull(groups = ValidacaoDocumento.Obrigatorio.class)
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
-    @Column(name = "tipo_documento", nullable = false, length = 10)
+    @Column(name = "tipo_documento", length = 10)
     private TipoDocumento tipoDocumento;
 
     // Opcional: não se aplica a quem se cadastra com CNPJ.
@@ -160,6 +162,10 @@ public class Usuario {
     // Os setters abaixo tiram pontos, traços e parênteses: o banco guarda só dígitos.
     public void setDocumento(String documento) {
         this.documento = Mascara.soDigitos(documento);
+    }
+
+    public void setEmail(String email) {
+        this.email = email == null ? null : email.trim().toLowerCase(Locale.ROOT);
     }
 
     public void setTelefone(String telefone) {

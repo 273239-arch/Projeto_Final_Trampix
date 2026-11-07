@@ -19,7 +19,7 @@ import com.trampix.repositorios.CategoriaRepositorio;
 
 import jakarta.validation.Valid;
 
-// TODO(segurança): criar, alterar e excluir categoria deve ser só para ADMIN quando houver autenticação.
+// GET é público. Criar, alterar e excluir: só ADMIN (regra na SegurancaConfig).
 @RestController
 @RequestMapping("/categorias")
 public class CategoriaRecurso {

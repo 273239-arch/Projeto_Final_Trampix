@@ -3,6 +3,7 @@ package com.trampix.recursos;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,10 +20,11 @@ import com.trampix.entidades.Usuario;
 import com.trampix.entidades.enums.Perfil;
 import com.trampix.entidades.enums.StatusUsuario;
 import com.trampix.repositorios.UsuarioRepositorio;
+import com.trampix.seguranca.Permissoes;
 
 import jakarta.validation.Valid;
 
-// TODO(segurança): ainda não há autenticação (JWT). Hoje qualquer um lista e altera usuários.
+// Cadastro (POST) é público. Listar todos: só ADMIN. Ver, alterar e excluir: só o próprio usuário ou ADMIN.
 @RestController
 @RequestMapping("/usuarios")
 public class UsuarioRecurso {
@@ -35,13 +37,15 @@ public class UsuarioRecurso {
         this.passwordEncoder = passwordEncoder;
     }
 
+    // Só ADMIN (regra na SegurancaConfig).
     @GetMapping
     public List<Usuario> listar() {
         return repositorio.findAll();
     }
 
     @GetMapping("/{id}")
-    public Usuario buscar(@PathVariable Long id) {
+    public Usuario buscar(@PathVariable Long id, @AuthenticationPrincipal Usuario logado) {
+        Permissoes.exigirProprioOuAdmin(logado, id);
         return buscarOu404(id);
     }
 
@@ -67,7 +71,9 @@ public class UsuarioRecurso {
 
     // Atualiza só os dados pessoais. Documento, tipo de documento, perfil e status não mudam por aqui.
     @PutMapping("/{id}")
-    public Usuario atualizar(@PathVariable Long id, @Valid @RequestBody Usuario dados) {
+    public Usuario atualizar(@PathVariable Long id, @Valid @RequestBody Usuario dados,
+            @AuthenticationPrincipal Usuario logado) {
+        Permissoes.exigirProprioOuAdmin(logado, id);
         Usuario usuario = buscarOu404(id);
         if (repositorio.existsByEmailAndIdNot(dados.getEmail(), id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "e-mail já cadastrado");
@@ -92,7 +98,8 @@ public class UsuarioRecurso {
     // Exclusão lógica: a conta fica INATIVA, nada é apagado.
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void excluir(@PathVariable Long id) {
+    public void excluir(@PathVariable Long id, @AuthenticationPrincipal Usuario logado) {
+        Permissoes.exigirProprioOuAdmin(logado, id);
         Usuario usuario = buscarOu404(id);
         usuario.setStatus(StatusUsuario.INATIVO);
         repositorio.save(usuario);

@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.trampix.entidades.Usuario;
+import com.trampix.entidades.enums.Perfil;
 
 public interface UsuarioRepositorio extends JpaRepository<Usuario, Long> {
 
@@ -15,4 +16,6 @@ public interface UsuarioRepositorio extends JpaRepository<Usuario, Long> {
     boolean existsByEmailAndIdNot(String email, Long id);
 
     boolean existsByDocumento(String documento);
+
+    boolean existsByPerfil(Perfil perfil);
 }
