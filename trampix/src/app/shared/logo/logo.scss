@@ -1,0 +1,42 @@
+// Figma: caixa de ferramentas à esquerda e "Trampix" em letra bem grossa à direita.
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: Poppins, Roboto, sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.icone {
+  font-size: 1.5em;
+  font-variation-settings: 'FILL' 1, 'wght' 400;
+  color: var(--trampix-cinza-escuro);
+}
+
+.tram {
+  color: var(--trampix-azul);
+}
+
+.pix {
+  color: var(--trampix-verde);
+}
+
+// Login: logo grande, na horizontal.
+.grande {
+  font-size: clamp(48px, 9vw, 96px);
+  gap: clamp(12px, 2.5vw, 32px);
+
+  .icone {
+    font-size: 1.6em;
+  }
+}
+
+.claro {
+  .icone,
+  .tram {
+    color: #fff;
+  }
+}

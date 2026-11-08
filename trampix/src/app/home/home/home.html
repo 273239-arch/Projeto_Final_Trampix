@@ -1,0 +1,93 @@
+<section class="pagina">
+  <h1 class="titulo-secao">Encontre o profissional certo</h1>
+
+  <!-- Filtro por categoria -->
+  <div class="filtro">
+    @if (carregandoCategorias()) {
+      <mat-progress-bar mode="indeterminate" aria-label="Carregando categorias" />
+    } @else if (erroCategorias()) {
+      <p class="aviso">
+        Não foi possível carregar as categorias.
+        <button mat-button type="button" (click)="carregarCategorias()">Tentar de novo</button>
+      </p>
+    } @else {
+      <mat-chip-listbox aria-label="Filtrar por categoria" [hideSingleSelectionIndicator]="true">
+        <mat-chip-option [selected]="categoriaId() === null" (click)="filtrarPorCategoria(null)">
+          Todas
+        </mat-chip-option>
+        @for (categoria of categorias(); track categoria.id) {
+          <mat-chip-option
+            [selected]="categoriaId() === categoria.id"
+            (click)="filtrarPorCategoria(categoria.id)"
+          >
+            {{ categoria.nome }}
+          </mat-chip-option>
+        } @empty {
+          <span class="aviso">Nenhuma categoria cadastrada ainda.</span>
+        }
+      </mat-chip-listbox>
+    }
+  </div>
+
+  @if (busca()) {
+    <p class="aviso">
+      Resultados para "<strong>{{ busca() }}</strong>"
+      <button mat-button type="button" (click)="limparBusca()">Limpar busca</button>
+    </p>
+  }
+
+  <!-- Lista de serviços -->
+  @if (carregandoServicos()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Carregando serviços" />
+  } @else if (erroServicos()) {
+    <div class="estado">
+      <mat-icon>cloud_off</mat-icon>
+      <p>Não foi possível carregar os serviços.</p>
+      <button mat-flat-button class="botao-verde" type="button" (click)="carregarServicos()">
+        Tentar de novo
+      </button>
+    </div>
+  } @else {
+    <div class="grade">
+      @for (servico of servicosFiltrados(); track servico.id) {
+        <article class="cartao">
+          <!-- O back ainda não tem foto de serviço -->
+          <div class="foto" aria-hidden="true">
+            <mat-icon>handyman</mat-icon>
+          </div>
+          <div class="corpo">
+            <h2 class="titulo-servico">{{ servico.titulo }}</h2>
+            @if (servico.descricao) {
+              <p class="descricao">{{ servico.descricao }}</p>
+            }
+            <p class="preco">
+              <mat-icon>paid</mat-icon>
+              {{ servico.preco | currency: 'BRL' }} {{ cobranca(servico.tipoCobranca) }}
+            </p>
+            <p class="prestador">
+              <span>{{ servico.prestador.nome }}</span>
+              @if (servico.prestador.verificado) {
+                <mat-icon class="verificado" aria-label="Prestador verificado">verified</mat-icon>
+              }
+              @if (servico.prestador.cidade) {
+                <span class="local">
+                  · {{ servico.prestador.cidade
+                  }}{{ servico.prestador.uf ? ' - ' + servico.prestador.uf : '' }}
+                </span>
+              }
+            </p>
+          </div>
+        </article>
+      } @empty {
+        <div class="estado">
+          <mat-icon>search_off</mat-icon>
+          @if (busca()) {
+            <p>Nenhum serviço encontrado para essa busca.</p>
+          } @else {
+            <p>Nenhum serviço disponível nesta categoria ainda.</p>
+          }
+        </div>
+      }
+    </div>
+  }
+</section>

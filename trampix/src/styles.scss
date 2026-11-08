@@ -1,8 +1,4 @@
-// Include theming for Angular Material with `mat.theme()`.
-// This Sass mixin will define CSS variables that are used for styling Angular Material
-// components according to the Material 3 design spec.
-// Learn more about theming and how to use it for your application's
-// custom components at https://material.angular.dev/guide/theming
+// Tema do Angular Material (Material 3). Mais em https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
 
 html {
@@ -10,8 +6,8 @@ html {
   @include mat.theme(
     (
       color: (
-        primary: mat.$cyan-palette,
-        tertiary: mat.$orange-palette,
+        primary: mat.$green-palette,
+        tertiary: mat.$blue-palette,
       ),
       typography: Roboto,
       density: 0,
@@ -19,21 +15,97 @@ html {
   );
 }
 
+// Cores medidas nas telas do Figma (docs/telas).
+:root {
+  --trampix-verde: #009764; // títulos, "Entrar", "Contato", "pix" do logo
+  --trampix-verde-claro: #d9f3e8; // selos "Verificado", "Disponível"
+  --trampix-azul: #013299; // "Tram", "Cadastrar", "Criar conta", rodapé
+  --trampix-cinza: #eeeeee; // busca do cabeçalho, quadro "Documentos aceitos"
+  --trampix-cinza-escuro: #393e41; // caixa de ferramentas do logo
+  --trampix-texto: #222222;
+  --trampix-texto-suave: #8a8a8a; // placeholders, "Esqueci minha senha"
+  --trampix-borda: #9c9c9c; // contorno dos campos
+  --trampix-linha: #c9c9c9; // linha embaixo do cabeçalho
+  --trampix-amarelo: #f4b400;
+  --trampix-vermelho: #e53935; // asterisco de obrigatório, "Sair da conta"
+}
+
 body {
-  // Default the application to a light color theme. This can be changed to
-  // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
   color-scheme: light;
-
-  // Set a default background, font and text colors for the application using
-  // Angular Material's system-level CSS variables. Learn more about these
-  // variables at https://material.angular.dev/guide/system-variables
-  background-color: var(--mat-sys-surface);
-  color: var(--mat-sys-on-surface);
+  background-color: #fff;
+  color: var(--trampix-texto);
   font: var(--mat-sys-body-medium);
-
-  // Reset the user agent margin.
   margin: 0;
   height: 100%;
+
+  // Componentes do Material com o verde do Trampix (o tema usaria um verde mais escuro).
+  --mat-progress-bar-active-indicator-color: var(--trampix-verde);
+  --mat-progress-bar-track-color: var(--trampix-verde-claro);
+  --mat-checkbox-selected-icon-color: var(--trampix-azul);
+  --mat-checkbox-selected-hover-icon-color: var(--trampix-azul);
+  --mat-checkbox-selected-focus-icon-color: var(--trampix-azul);
+  --mat-checkbox-selected-pressed-icon-color: var(--trampix-azul);
 }
-/* You can add global styles to this file, and also import other style files */
+
+// Ícones do Figma são de traço fino: Material Symbols Outlined.
+.material-symbols-outlined {
+  font-variation-settings: 'wght' 300;
+}
+
+// Botões do Figma: retangulares, cantos de 4px, texto em maiúsculas.
+// Uso: <button mat-flat-button class="botao-verde">.
+.botao-verde,
+.botao-azul {
+  --mat-button-filled-label-text-color: #fff;
+  --mat-button-filled-container-shape: 4px;
+  --mat-button-filled-container-height: 40px;
+  --mat-button-filled-label-text-weight: 400; // Figma: texto fino ("ENTRAR", "CADASTRAR")
+  --mat-button-filled-label-text-tracking: 0.02em;
+}
+
+.botao-verde {
+  --mat-button-filled-container-color: var(--trampix-verde);
+}
+
+.botao-azul {
+  --mat-button-filled-container-color: var(--trampix-azul);
+}
+
+// Campos do Figma: rótulo em cima (fora do campo), contorno cinza fino, cantos de 4px.
+// Uso: <label class="rotulo-campo">E-mail <span class="obrigatorio">*</span></label>
+//      <mat-form-field appearance="outline" class="campo">...
+.campo {
+  width: 100%;
+  --mat-form-field-container-height: 44px;
+  --mat-form-field-container-vertical-padding: 10px;
+  --mat-form-field-outlined-container-shape: 4px;
+  --mat-form-field-outlined-outline-color: var(--trampix-borda);
+  --mat-form-field-outlined-hover-outline-color: var(--trampix-texto);
+  --mat-form-field-outlined-focus-outline-color: var(--trampix-azul);
+  --mat-form-field-outlined-input-text-placeholder-color: var(--trampix-texto-suave);
+  --mat-form-field-container-text-size: 14px;
+
+  .mat-mdc-form-field-icon-prefix,
+  .mat-mdc-form-field-icon-suffix {
+    color: var(--trampix-texto-suave);
+  }
+}
+
+.rotulo-campo {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 15px;
+  color: var(--trampix-texto);
+}
+
+.obrigatorio {
+  color: var(--trampix-vermelho);
+}
+
+// Títulos de seção em verde ("Serviços Realizados", "Avaliações").
+.titulo-secao {
+  margin: 0 0 16px;
+  color: var(--trampix-verde);
+  font-size: 22px;
+  font-weight: 700;
+}

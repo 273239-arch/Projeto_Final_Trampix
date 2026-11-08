@@ -1,0 +1,65 @@
+<main class="pagina">
+  <a routerLink="/" class="link-logo" aria-label="Trampix, página inicial">
+    <app-logo tamanho="grande" />
+  </a>
+
+  <form class="formulario" [formGroup]="form" (ngSubmit)="entrar()" novalidate>
+    <!-- O Figma diz "Nome de usuário", mas o back faz login por e-mail. -->
+    <label class="rotulo-campo" for="login-email">E-mail <span class="obrigatorio">*</span></label>
+    <mat-form-field appearance="outline" class="campo">
+      <mat-icon matPrefix>person</mat-icon>
+      <input
+        id="login-email"
+        matInput
+        type="email"
+        formControlName="email"
+        placeholder="Digite seu e-mail"
+        autocomplete="email"
+        required
+      />
+      @if (form.controls.email.hasError('required')) {
+        <mat-error>Informe o e-mail.</mat-error>
+      } @else if (form.controls.email.hasError('email')) {
+        <mat-error>E-mail inválido.</mat-error>
+      }
+    </mat-form-field>
+
+    <label class="rotulo-campo" for="login-senha">Senha <span class="obrigatorio">*</span></label>
+    <mat-form-field appearance="outline" class="campo">
+      <mat-icon matPrefix>lock</mat-icon>
+      <input
+        id="login-senha"
+        matInput
+        [type]="mostrarSenha() ? 'text' : 'password'"
+        formControlName="senha"
+        placeholder="Digite sua senha"
+        autocomplete="current-password"
+        required
+      />
+      <button
+        mat-icon-button
+        matSuffix
+        type="button"
+        (click)="mostrarSenha.set(!mostrarSenha())"
+        [attr.aria-label]="mostrarSenha() ? 'Esconder senha' : 'Mostrar senha'"
+      >
+        <mat-icon>{{ mostrarSenha() ? 'visibility_off' : 'visibility' }}</mat-icon>
+      </button>
+      @if (form.controls.senha.hasError('required')) {
+        <mat-error>Informe a senha.</mat-error>
+      }
+    </mat-form-field>
+
+    <button type="button" class="esqueci" (click)="esqueciSenha()">Esqueci minha senha</button>
+
+    <div class="acoes">
+      @if (entrando()) {
+        <mat-progress-bar mode="indeterminate" aria-label="Entrando" />
+      }
+      <button mat-flat-button class="botao-verde" type="submit" [disabled]="entrando()">
+        ENTRAR
+      </button>
+      <a mat-flat-button class="botao-azul" routerLink="/clientes/cadastro">CADASTRAR</a>
+    </div>
+  </form>
+</main>

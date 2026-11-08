@@ -1,0 +1,120 @@
+.pagina {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+// Figma: logo e busca juntos à esquerda, ícones à direita, sombra cinza embaixo.
+.cabecalho {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 64px;
+  padding: 0 24px;
+  background: #fff;
+  box-shadow: 0 2px 3px rgb(0 0 0 / 0.18);
+}
+
+.link-logo {
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+// Busca em pílula cinza, com lupa e filtro à direita.
+.busca {
+  flex: 0 1 320px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 30px;
+  padding: 0 10px 0 14px;
+  border-radius: 15px;
+  background: var(--trampix-cinza);
+  color: var(--trampix-texto-suave);
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font: inherit;
+    font-size: 13px;
+    color: var(--trampix-texto);
+
+    &::placeholder {
+      color: var(--trampix-texto-suave);
+    }
+  }
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+
+  &:focus-within {
+    outline: 2px solid var(--trampix-azul);
+  }
+}
+
+.botao-busca {
+  display: flex;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.usuario {
+  margin-left: auto;
+  color: var(--trampix-texto);
+}
+
+.menu-nome {
+  font-weight: 500;
+}
+
+.sair {
+  color: var(--trampix-vermelho);
+
+  mat-icon {
+    color: inherit;
+  }
+}
+
+.conteudo {
+  flex: 1;
+}
+
+.rodape {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 32px;
+  background: var(--trampix-azul);
+  color: rgb(255 255 255 / 0.8);
+  font-size: 12px;
+}
+
+@media (max-width: 600px) {
+  .cabecalho {
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  // No celular o logo vira só o ícone, para sobrar espaço para a busca.
+  .cabecalho:has(.busca) .link-logo ::ng-deep .texto {
+    display: none;
+  }
+
+  .busca {
+    flex: 1;
+  }
+}

@@ -1,0 +1,59 @@
+<div class="pagina">
+  <header class="cabecalho">
+    <a routerLink="/" class="link-logo" aria-label="Trampix, página inicial">
+      <app-logo />
+    </a>
+
+    @if (!cabecalhoSimples()) {
+      <form class="busca" role="search" (submit)="buscar($event, campoBusca.value)">
+        <input
+          #campoBusca
+          type="search"
+          placeholder="Buscar serviços..."
+          aria-label="Buscar serviços"
+          [value]="busca()"
+        />
+        <button type="submit" class="botao-busca" aria-label="Buscar">
+          <mat-icon>search</mat-icon>
+        </button>
+        <mat-icon class="filtro" aria-hidden="true">filter_alt</mat-icon>
+      </form>
+
+      <button
+        mat-icon-button
+        class="usuario"
+        [matMenuTriggerFor]="menuUsuario"
+        aria-label="Conta do usuário"
+      >
+        <mat-icon>account_circle</mat-icon>
+      </button>
+
+      <mat-menu #menuUsuario="matMenu" xPosition="before">
+        @if (auth.usuario(); as usuario) {
+          <div class="menu-nome" mat-menu-item disabled>{{ usuario.nome }}</div>
+          <mat-divider />
+          <button mat-menu-item class="sair" (click)="sair()">
+            <mat-icon>logout</mat-icon>
+            <span>Sair da conta</span>
+          </button>
+        } @else {
+          <a mat-menu-item routerLink="/login">
+            <mat-icon>login</mat-icon>
+            <span>Entrar</span>
+          </a>
+          <a mat-menu-item routerLink="/clientes/cadastro">
+            <mat-icon>person_add</mat-icon>
+            <span>Criar conta</span>
+          </a>
+        }
+      </mat-menu>
+    }
+  </header>
+
+  <main class="conteudo">
+    <router-outlet />
+  </main>
+
+  <!-- Figma: faixa azul lisa no fim da página -->
+  <footer class="rodape">© {{ ano }} Trampix</footer>
+</div>

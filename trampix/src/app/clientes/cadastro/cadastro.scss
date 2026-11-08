@@ -1,23 +1,181 @@
 .pagina {
-  max-width: 720px;
-  margin: 32px auto;
-  padding: 0 16px;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 28px 24px 16px;
 }
 
-mat-card-content {
+// Figma: título preto e em negrito.
+.titulo {
+  margin: 0 0 16px;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--trampix-texto);
+}
+
+// Grade do Figma: 2 colunas bem afastadas (linhas 1, 2 e uploads) e 3 colunas na linha 3.
+.linha {
+  display: grid;
+  row-gap: 4px;
+}
+
+.duas {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 72px;
+}
+
+.tres {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 96px;
+}
+
+.espaco-acima {
+  margin-top: 20px;
+}
+
+.rotulo-documento {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  mat-button-toggle-group {
+    --mat-button-toggle-height: 24px;
+    --mat-button-toggle-label-text-size: 11px;
+    --mat-button-toggle-shape: 4px;
+    margin-top: -2px;
+  }
+}
+
+.documento-upload {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+
+  .area-upload {
+    flex: 1;
+  }
+}
+
+.area-upload {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-top: 24px;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 96px;
+  padding: 12px;
+  border: 1px solid var(--trampix-borda);
+  background: #fff;
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+  word-break: break-all;
+
+  &:hover,
+  &:focus-within {
+    border-color: var(--trampix-azul);
+  }
+
+  input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+  }
 }
 
-mat-form-field {
-  width: 100%;
+.icone-upload {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 36px;
+  margin-bottom: 4px;
+  background: var(--trampix-cinza);
+  color: var(--trampix-azul);
 }
 
-mat-card-actions {
+.clique,
+.nome-arquivo {
+  color: var(--trampix-azul);
+}
+
+// Quadro cinza "Documentos aceitos" com marcas verdes.
+.aceitos {
+  padding: 10px 14px;
+  background: var(--trampix-cinza);
+  font-size: 12px;
+
+  p {
+    margin: 0 0 4px;
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0 2px 8px;
+  }
+
+  mat-icon {
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+    color: var(--trampix-verde);
+  }
+}
+
+.coluna-direita {
+  max-width: 300px;
+  margin-left: 20%;
+}
+
+.legenda {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--trampix-texto);
+}
+
+.rodape-form {
+  margin-top: 20px;
+  align-items: start;
+}
+
+.aceites {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 16px;
+  flex-direction: column;
+  --mat-checkbox-label-text-size: 12px;
+}
+
+.criar {
+  width: 100%;
+  --mat-button-filled-label-text-weight: 700;
+  --mat-button-filled-label-text-size: 16px;
+}
+
+.erro-texto {
+  margin: 4px 0;
+  color: var(--mat-sys-error);
+  font-size: 12px;
+}
+
+.recuo {
+  margin-left: 40px;
+}
+
+@media (max-width: 800px) {
+  .duas,
+  .tres {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .coluna-direita {
+    max-width: none;
+    margin-left: 0;
+  }
 }

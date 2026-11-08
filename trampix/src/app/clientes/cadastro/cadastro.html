@@ -1,51 +1,270 @@
 <main class="pagina">
-  <mat-card appearance="outlined">
-    <mat-card-header>
-      <mat-card-title>Cadastro Cliente</mat-card-title>
-      <mat-card-subtitle>
-        Preencha os dados para criar sua conta
-      </mat-card-subtitle>
-    </mat-card-header>
+  <h1 class="titulo">Criar sua conta</h1>
 
-    <mat-card-content>
-      <mat-form-field appearance="outline">
-        <mat-label>CPF ou RG</mat-label>
-        <input matInput name="cpf" required [(ngModel)]="cpf">
-      </mat-form-field>
+  <form [formGroup]="form" (ngSubmit)="criarConta()" novalidate>
+    <!-- Linha 1: nome e e-mail -->
+    <div class="linha duas">
+      <div>
+        <label class="rotulo-campo" for="cad-nome">
+          Nome completo <span class="obrigatorio">*</span>
+        </label>
+        <mat-form-field appearance="outline" class="campo">
+          <input
+            id="cad-nome"
+            matInput
+            formControlName="nome"
+            placeholder="Digite seu nome"
+            autocomplete="name"
+            required
+          />
+          @if (erro('nome'); as mensagem) {
+            <mat-error>{{ mensagem }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Nome completo</mat-label>
-        <input matInput name="nome" required [(ngModel)]="nome">
-      </mat-form-field>
+      <div>
+        <label class="rotulo-campo" for="cad-email">E-mail <span class="obrigatorio">*</span></label>
+        <mat-form-field appearance="outline" class="campo">
+          <input
+            id="cad-email"
+            matInput
+            type="email"
+            formControlName="email"
+            placeholder="exemplo@gmail.com"
+            autocomplete="email"
+            required
+          />
+          @if (erro('email'); as mensagem) {
+            <mat-error>{{ mensagem }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
+    </div>
 
-      <mat-form-field appearance="outline">
-        <mat-label>E-mail para cadastro</mat-label>
-        <input matInput type="email" name="email" required [(ngModel)]="email">
-      </mat-form-field>
+    <!-- Linha 2: senha e confirmação (o olho fica no "Confirmar senha", como no Figma) -->
+    <div class="linha duas">
+      <div>
+        <label class="rotulo-campo" for="cad-senha">Senha <span class="obrigatorio">*</span></label>
+        <mat-form-field appearance="outline" class="campo">
+          <mat-icon matPrefix>lock</mat-icon>
+          <input
+            id="cad-senha"
+            matInput
+            [type]="mostrarSenha() ? 'text' : 'password'"
+            formControlName="senha"
+            placeholder="Digite sua senha"
+            autocomplete="new-password"
+            required
+          />
+          <mat-hint>De 8 a 72 caracteres</mat-hint>
+          @if (erro('senha'); as mensagem) {
+            <mat-error>{{ mensagem }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Crie uma senha</mat-label>
-        <input matInput type="password" name="senha" required [(ngModel)]="senha">
-      </mat-form-field>
+      <div>
+        <label class="rotulo-campo" for="cad-confirmar">
+          Confirmar senha <span class="obrigatorio">*</span>
+        </label>
+        <mat-form-field appearance="outline" class="campo">
+          <mat-icon matPrefix>lock</mat-icon>
+          <input
+            id="cad-confirmar"
+            matInput
+            [type]="mostrarSenha() ? 'text' : 'password'"
+            formControlName="confirmarSenha"
+            placeholder="Confirme sua senha"
+            autocomplete="new-password"
+            required
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="mostrarSenha.set(!mostrarSenha())"
+            [attr.aria-label]="mostrarSenha() ? 'Esconder senhas' : 'Mostrar senhas'"
+          >
+            <mat-icon>{{ mostrarSenha() ? 'visibility' : 'visibility_off' }}</mat-icon>
+          </button>
+          @if (erro('confirmarSenha'); as mensagem) {
+            <mat-error>{{ mensagem }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
+    </div>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Confirme a senha</mat-label>
-        <input matInput type="password" name="confirmarSenha" required [(ngModel)]="confirmarSenha">
-      </mat-form-field>
+    <!-- Linha 3: documento, telefone e data de nascimento -->
+    <div class="linha tres espaco-acima">
+      <div>
+        <div class="rotulo-documento">
+          <label class="rotulo-campo" for="cad-documento">
+            {{ form.controls.tipoDocumento.value }} <span class="obrigatorio">*</span>
+          </label>
+          <!-- O Figma só tem CPF; o back aceita CPF ou CNPJ (decisão do grupo). -->
+          <mat-button-toggle-group
+            formControlName="tipoDocumento"
+            aria-label="Tipo de documento"
+            [hideSingleSelectionIndicator]="true"
+          >
+            <mat-button-toggle value="CPF">CPF</mat-button-toggle>
+            <mat-button-toggle value="CNPJ">CNPJ</mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+        <mat-form-field appearance="outline" class="campo">
+          <mat-icon matPrefix>badge</mat-icon>
+          <input
+            id="cad-documento"
+            matInput
+            formControlName="documento"
+            inputmode="numeric"
+            required
+            [placeholder]="
+              form.controls.tipoDocumento.value === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00'
+            "
+          />
+          @if (erro('documento'); as mensagem) {
+            <mat-error>{{ mensagem }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
 
-      @if (mensagem) {
-        <p role="status">{{ mensagem }}</p>
-      }
-    </mat-card-content>
+      <div>
+        <label class="rotulo-campo" for="cad-telefone">
+          Telefone <span class="obrigatorio">*</span>
+        </label>
+        <mat-form-field appearance="outline" class="campo">
+          <mat-icon matPrefix>call</mat-icon>
+          <input
+            id="cad-telefone"
+            matInput
+            type="tel"
+            formControlName="telefone"
+            placeholder="(00) 00000-0000"
+            autocomplete="tel"
+            required
+          />
+          @if (erro('telefone'); as mensagem) {
+            <mat-error>{{ mensagem }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
 
-    <mat-card-actions align="end">
-      <button mat-button type="button" (click)="limpar()">
-        Limpar
-      </button>
-      <button mat-flat-button type="button"
-              [disabled]="!nome.trim()" (click)="salvar()">
-        Cadastrar
-      </button>
-    </mat-card-actions>
-  </mat-card>
+      <div>
+        <!-- No back é opcional (não se aplica a CNPJ), por isso sem asterisco. -->
+        <label class="rotulo-campo" for="cad-nascimento">Data de nascimento</label>
+        <mat-form-field appearance="outline" class="campo">
+          <mat-icon matPrefix>calendar_month</mat-icon>
+          <input
+            id="cad-nascimento"
+            matInput
+            type="date"
+            formControlName="dataNascimento"
+            autocomplete="bday"
+          />
+          <mat-hint>Opcional</mat-hint>
+          @if (erro('dataNascimento'); as mensagem) {
+            <mat-error>{{ mensagem }}</mat-error>
+          }
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Uploads (ainda não enviam nada: o back não tem endpoint) -->
+    <div class="linha duas espaco-acima">
+      <div>
+        <p class="rotulo-campo">Documento (Upload)</p>
+        <div class="documento-upload">
+          <label
+            class="area-upload"
+            (dragover)="$event.preventDefault()"
+            (drop)="soltarArquivo('documento', $event)"
+          >
+            <input
+              type="file"
+              accept=".jpg,.jpeg,.png,.pdf"
+              (change)="escolherArquivo('documento', $event)"
+            />
+            <span class="icone-upload"><mat-icon>cloud_upload</mat-icon></span>
+            @if (documento().nome; as nome) {
+              <span class="nome-arquivo">{{ nome }}</span>
+            } @else {
+              <span class="clique">Clique para enviar</span>
+              <span>ou arraste o arquivo aqui</span>
+            }
+          </label>
+          <div class="aceitos">
+            <p>Documentos aceitos:</p>
+            <ul>
+              <li><mat-icon>check_circle</mat-icon>RG</li>
+              <li><mat-icon>check_circle</mat-icon>CNH</li>
+              <li><mat-icon>check_circle</mat-icon>CPF Digital</li>
+              <li><mat-icon>check_circle</mat-icon>Passaporte</li>
+            </ul>
+          </div>
+        </div>
+        <p class="legenda">Formatos aceitos: JPG, PNG, PDF • Tamanho máximo: 10MB</p>
+        @if (documento().erro; as mensagem) {
+          <p class="erro-texto">{{ mensagem }}</p>
+        }
+      </div>
+
+      <div class="coluna-direita">
+        <p class="rotulo-campo">Foto do usuário (Upload)</p>
+        <label
+          class="area-upload"
+          (dragover)="$event.preventDefault()"
+          (drop)="soltarArquivo('selfie', $event)"
+        >
+          <input type="file" accept=".jpg,.jpeg,.png" (change)="escolherArquivo('selfie', $event)" />
+          <span class="icone-upload"><mat-icon>photo_camera</mat-icon></span>
+          @if (selfie().nome; as nome) {
+            <span class="nome-arquivo">{{ nome }}</span>
+          } @else {
+            <span class="clique">Clique para enviar</span>
+            <span>ou arraste o arquivo aqui</span>
+          }
+        </label>
+        <p class="legenda">
+          Selfie para confirmação de identidade.<br />
+          Formatos aceitos: JPG, PNG • Tamanho máximo: 10MB
+        </p>
+        @if (selfie().erro; as mensagem) {
+          <p class="erro-texto">{{ mensagem }}</p>
+        }
+      </div>
+    </div>
+    <p class="legenda">O envio dos arquivos será liberado em breve.</p>
+
+    <!-- Aceites à esquerda e botão à direita, embaixo da foto -->
+    <div class="linha duas rodape-form">
+      <div class="aceites">
+        <mat-checkbox formControlName="aceiteDocumentos">
+          Confirmo que os documentos enviados são verdadeiros.
+        </mat-checkbox>
+        @if (erro('aceiteDocumentos')) {
+          <p class="erro-texto recuo">Marque para continuar.</p>
+        }
+        <mat-checkbox formControlName="aceiteTermos">
+          Aceito os Termos de Uso e Política de Privacidade.
+        </mat-checkbox>
+        @if (erro('aceiteTermos')) {
+          <p class="erro-texto recuo">Marque para continuar.</p>
+        }
+      </div>
+
+      <div class="coluna-direita">
+        @if (erroGeral(); as mensagem) {
+          <p class="erro-texto" role="alert">{{ mensagem }}</p>
+        }
+        @if (enviando()) {
+          <mat-progress-bar mode="indeterminate" aria-label="Criando conta" />
+        }
+        <button mat-flat-button class="botao-azul criar" type="submit" [disabled]="enviando()">
+          CRIAR CONTA
+        </button>
+      </div>
+    </div>
+  </form>
 </main>
