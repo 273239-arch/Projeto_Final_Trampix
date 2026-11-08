@@ -1,7 +1,9 @@
 package com.trampix.recursos;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 import com.trampix.entidades.Contratacao;
 import com.trampix.entidades.Servico;
@@ -13,9 +15,16 @@ import com.trampix.entidades.enums.TipoCobranca;
 public record ContratacaoResposta(
         Long id,
         StatusContratacao status,
-        LocalDateTime dataHoraDesejada,
+        LocalDate dataInicio,
+        LocalDate dataFim,
+        LocalTime horaInicio,
+        LocalTime horaFim,
         String observacao,
         BigDecimal precoCombinado,
+        String mensagemContraproposta,
+        LocalDateTime contrapropostaEm,
+        String motivoRecusa,
+        LocalDateTime expiraEm,
         ServicoResumo servico,
         ParteResumo cliente,
         ParteResumo prestador,
@@ -39,14 +48,30 @@ public record ContratacaoResposta(
         return new ContratacaoResposta(
                 contratacao.getId(),
                 contratacao.getStatus(),
-                contratacao.getDataHoraDesejada(),
+                contratacao.getDataInicio(),
+                contratacao.getDataFim(),
+                contratacao.getHoraInicio(),
+                contratacao.getHoraFim(),
                 contratacao.getObservacao(),
                 contratacao.getPrecoCombinado(),
+                contratacao.getMensagemContraproposta(),
+                contratacao.getContrapropostaEm(),
+                contratacao.getMotivoRecusa(),
+                expiraEm(contratacao),
                 new ServicoResumo(servico.getId(), servico.getTitulo(), servico.getTipoCobranca()),
                 parte(cliente, aceita && logadoEhPrestador),
                 parte(prestador, aceita && logadoEhCliente),
                 contratacao.getCriadoEm(),
                 contratacao.getAtualizadoEm());
+    }
+
+    // data em que o pedido ou a contraproposta expira
+    private static LocalDateTime expiraEm(Contratacao contratacao) {
+        return switch (contratacao.getStatus()) {
+            case PENDENTE -> contratacao.getCriadoEm().plus(ContratacaoRecurso.PRAZO_RESPOSTA);
+            case CONTRAPROPOSTA -> contratacao.getContrapropostaEm().plus(ContratacaoRecurso.PRAZO_RESPOSTA);
+            default -> null;
+        };
     }
 
     private static ParteResumo parte(Usuario usuario, boolean mostrarTelefone) {

@@ -7,13 +7,10 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import com.trampix.entidades.Disponibilidade;
-import com.trampix.entidades.enums.DiaSemana;
 
 public interface DisponibilidadeRepositorio extends JpaRepository<Disponibilidade, Long> {
 
     List<Disponibilidade> findByPrestadorId(Long prestadorId);
-
-    List<Disponibilidade> findByPrestadorIdAndDiaSemana(Long prestadorId, DiaSemana diaSemana);
 
     // apaga os horários do prestador
     @Modifying

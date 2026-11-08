@@ -1,11 +1,17 @@
 package com.trampix.recursos;
 
+import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,7 +28,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.trampix.entidades.Contratacao;
 import com.trampix.entidades.ContratacaoHistorico;
-import com.trampix.entidades.PrestadorPerfil;
+import com.trampix.entidades.Disponibilidade;
 import com.trampix.entidades.Servico;
 import com.trampix.entidades.Usuario;
 import com.trampix.entidades.enums.DiaSemana;
@@ -30,6 +36,7 @@ import com.trampix.entidades.enums.Perfil;
 import com.trampix.entidades.enums.StatusContratacao;
 import com.trampix.entidades.enums.StatusServico;
 import com.trampix.entidades.enums.StatusUsuario;
+import com.trampix.entidades.enums.TipoCobranca;
 import com.trampix.repositorios.ContratacaoHistoricoRepositorio;
 import com.trampix.repositorios.ContratacaoRepositorio;
 import com.trampix.repositorios.DisponibilidadeRepositorio;
@@ -37,6 +44,10 @@ import com.trampix.repositorios.PrestadorPerfilRepositorio;
 import com.trampix.repositorios.ServicoRepositorio;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -48,25 +59,61 @@ public class ContratacaoRecurso {
     // fuso horário de Brasília
     public static final ZoneId FUSO = ZoneId.of("America/Sao_Paulo");
 
-    // duração de cada atendimento
-    public static final Duration DURACAO_ATENDIMENTO = Duration.ofHours(1);
+    // prazo para responder um pedido ou uma contraproposta
+    public static final Duration PRAZO_RESPOSTA = Duration.ofDays(7);
 
     public record CriarRequisicao(
             @NotNull Long servicoId,
-            @NotNull LocalDateTime dataHoraDesejada,
+            @NotNull LocalDate dataInicio,
+            LocalDate dataFim,
+            LocalTime horaInicio,
+            @Min(1) @Max(24) Integer quantidadeHoras,
             @Size(max = 1000) String observacao) {
+    }
+
+    public record ContrapropostaRequisicao(
+            @NotNull LocalDate dataInicio,
+            LocalDate dataFim,
+            LocalTime horaInicio,
+            @Min(1) @Max(24) Integer quantidadeHoras,
+            @DecimalMin(value = "0.01", message = "o preço deve ser maior que zero")
+            @Digits(integer = 8, fraction = 2) BigDecimal precoCombinado,
+            @Size(max = 500) String mensagem) {
+    }
+
+    public record RecusaRequisicao(@Size(max = 500) String motivo) {
     }
 
     // resposta do histórico
     public record HistoricoResposta(Long id, StatusContratacao statusAnterior, StatusContratacao statusNovo,
-            AutorResumo autor, LocalDateTime criadoEm) {
+            AutorResumo autor, LocalDate dataInicio, LocalDate dataFim, LocalTime horaInicio, LocalTime horaFim,
+            BigDecimal precoCombinado, String mensagem, LocalDateTime criadoEm) {
 
         public record AutorResumo(Long id, String nome) {
         }
 
         static HistoricoResposta de(ContratacaoHistorico h) {
-            return new HistoricoResposta(h.getId(), h.getStatusAnterior(), h.getStatusNovo(),
-                    new AutorResumo(h.getAutor().getId(), h.getAutor().getNome()), h.getCriadoEm());
+            AutorResumo autor = h.getAutor() == null ? null
+                    : new AutorResumo(h.getAutor().getId(), h.getAutor().getNome());
+            return new HistoricoResposta(h.getId(), h.getStatusAnterior(), h.getStatusNovo(), autor,
+                    h.getDataInicio(), h.getDataFim(), h.getHoraInicio(), h.getHoraFim(), h.getPrecoCombinado(),
+                    h.getMensagem(), h.getCriadoEm());
+        }
+    }
+
+    // datas e horas de um pedido (horas nulas quando é por dia)
+    record Periodo(LocalDate dataInicio, LocalDate dataFim, LocalTime horaInicio, LocalTime horaFim) {
+
+        boolean porHora() {
+            return horaInicio != null;
+        }
+
+        long dias() {
+            return ChronoUnit.DAYS.between(dataInicio, dataFim) + 1;
+        }
+
+        long horas() {
+            return Duration.between(horaInicio, horaFim).toHours();
         }
     }
 
@@ -75,10 +122,12 @@ public class ContratacaoRecurso {
     private final ServicoRepositorio servicoRepositorio;
     private final DisponibilidadeRepositorio disponibilidadeRepositorio;
     private final PrestadorPerfilRepositorio prestadorRepositorio;
+    private final ExpiradorContratacao expirador;
 
     public ContratacaoRecurso(ContratacaoRepositorio repositorio, ContratacaoHistoricoRepositorio historicoRepositorio,
             ServicoRepositorio servicoRepositorio, DisponibilidadeRepositorio disponibilidadeRepositorio,
-            PrestadorPerfilRepositorio prestadorRepositorio) {
+            PrestadorPerfilRepositorio prestadorRepositorio, ExpiradorContratacao expirador) {
+        this.expirador = expirador;
         this.repositorio = repositorio;
         this.historicoRepositorio = historicoRepositorio;
         this.servicoRepositorio = servicoRepositorio;
@@ -93,38 +142,40 @@ public class ContratacaoRecurso {
             @AuthenticationPrincipal Usuario logado) {
         Servico servico = servicoRepositorio.findById(requisicao.servicoId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "serviço não encontrado"));
-        PrestadorPerfil prestador = servico.getPrestador();
         if (servico.getStatus() != StatusServico.ATIVO) {
             throw regra("este serviço não está disponível para contratação (status " + servico.getStatus() + ")");
         }
         if (logado.getStatus() != StatusUsuario.ATIVO) {
             throw regra("só usuário ATIVO pode contratar");
         }
-        if (prestador.getUsuario().getStatus() != StatusUsuario.ATIVO) {
+        Usuario prestador = servico.getPrestador().getUsuario();
+        if (prestador.getStatus() != StatusUsuario.ATIVO) {
             throw regra("o prestador deste serviço não está ativo");
         }
-        if (prestador.getUsuario().getId().equals(logado.getId())) {
+        if (prestador.getId().equals(logado.getId())) {
             throw regra("você não pode contratar o seu próprio serviço");
         }
-        LocalDateTime inicio = requisicao.dataHoraDesejada().withSecond(0).withNano(0);
-        exigirFuturo(inicio);
-        exigirDentroDaDisponibilidade(prestador, inicio);
-        exigirSemConflito(prestador, inicio, 0L);
+        Periodo periodo = montarPeriodo(servico, requisicao.dataInicio(), requisicao.dataFim(),
+                requisicao.horaInicio(), requisicao.quantidadeHoras());
+        exigirDataValida(periodo);
+        exigirDisponibilidade(servico, periodo);
+        exigirSemConflito(servico, periodo, 0L);
 
         Contratacao contratacao = new Contratacao();
         contratacao.setServico(servico);
         contratacao.setCliente(logado);
         contratacao.setStatus(StatusContratacao.PENDENTE);
-        contratacao.setDataHoraDesejada(inicio);
+        aplicarPeriodo(contratacao, periodo);
         contratacao.setObservacao(requisicao.observacao());
-        contratacao.setPrecoCombinado(servico.getPreco());
+        contratacao.setPrecoCombinado(calcularPreco(servico, periodo));
         repositorio.save(contratacao);
-        historicoRepositorio.save(new ContratacaoHistorico(contratacao, logado, null, StatusContratacao.PENDENTE));
+        historicoRepositorio.save(new ContratacaoHistorico(contratacao, logado, null, requisicao.observacao()));
         return ContratacaoResposta.de(contratacao, logado);
     }
 
     // lista as contratações do usuário logado (ADMIN pode filtrar)
     @GetMapping
+    @Transactional
     public List<ContratacaoResposta> listar(@RequestParam(required = false) String papel,
             @RequestParam(required = false) Long usuarioId, @RequestParam(required = false) Long servicoId,
             @AuthenticationPrincipal Usuario logado) {
@@ -147,19 +198,24 @@ public class ContratacaoRecurso {
                         "papel inválido: use cliente ou prestador");
             }
         }
+        expirador.expirarVencidas();
         return repositorio.filtrar(alvo, comoCliente, comoPrestador, filtroDeAdmin ? servicoId : null).stream()
                 .map(c -> ContratacaoResposta.de(c, logado)).toList();
     }
 
     @GetMapping("/{id}")
+    @Transactional
     public ContratacaoResposta buscar(@PathVariable Long id, @AuthenticationPrincipal Usuario logado) {
+        expirador.expirarVencidas();
         Contratacao contratacao = buscarOu404(id);
         exigirParteOuAdmin(contratacao, logado);
         return ContratacaoResposta.de(contratacao, logado);
     }
 
     @GetMapping("/{id}/historico")
+    @Transactional
     public List<HistoricoResposta> historico(@PathVariable Long id, @AuthenticationPrincipal Usuario logado) {
+        expirador.expirarVencidas();
         Contratacao contratacao = buscarOu404(id);
         exigirParteOuAdmin(contratacao, logado);
         return historicoRepositorio.findByContratacaoIdOrderByCriadoEmAscIdAsc(id).stream()
@@ -169,75 +225,210 @@ public class ContratacaoRecurso {
     @PostMapping("/{id}/aceitar")
     @Transactional
     public ContratacaoResposta aceitar(@PathVariable Long id, @AuthenticationPrincipal Usuario logado) {
+        expirador.expirarVencidas();
         Contratacao contratacao = buscarOu404(id);
         exigirPrestador(contratacao, logado, "aceitar");
-        exigirStatus(contratacao, "aceitar", Set.of(StatusContratacao.PENDENTE));
-        // trava o prestador
-        PrestadorPerfil prestador = prestadorRepositorio.travar(contratacao.getServico().getPrestador().getId())
-                .orElseThrow();
-        exigirFuturo(contratacao.getDataHoraDesejada());
-        exigirSemConflito(prestador, contratacao.getDataHoraDesejada(), contratacao.getId());
-        return mudarStatus(contratacao, StatusContratacao.ACEITA, logado);
+        exigirStatus(contratacao, "aceitar", EnumSet.of(StatusContratacao.PENDENTE));
+        travarPrestador(contratacao);
+        Periodo periodo = periodoDe(contratacao);
+        exigirDataValida(periodo);
+        exigirSemConflito(contratacao.getServico(), periodo, contratacao.getId());
+        return mudarStatus(contratacao, StatusContratacao.ACEITA, logado, null);
     }
 
+    @PostMapping("/{id}/contraproposta")
+    @Transactional
+    public ContratacaoResposta contrapropor(@PathVariable Long id,
+            @Valid @RequestBody ContrapropostaRequisicao requisicao, @AuthenticationPrincipal Usuario logado) {
+        expirador.expirarVencidas();
+        Contratacao contratacao = buscarOu404(id);
+        exigirPrestador(contratacao, logado, "fazer contraproposta");
+        if (contratacao.getContrapropostaEm() != null) {
+            throw regra("o prestador já fez uma contraproposta neste pedido");
+        }
+        exigirStatus(contratacao, "fazer contraproposta em", EnumSet.of(StatusContratacao.PENDENTE));
+        Servico servico = contratacao.getServico();
+        Periodo periodo = montarPeriodo(servico, requisicao.dataInicio(), requisicao.dataFim(),
+                requisicao.horaInicio(), requisicao.quantidadeHoras());
+        exigirDataValida(periodo);
+        exigirDisponibilidade(servico, periodo);
+        exigirSemConflito(servico, periodo, contratacao.getId());
+
+        aplicarPeriodo(contratacao, periodo);
+        contratacao.setPrecoCombinado(requisicao.precoCombinado() != null
+                ? requisicao.precoCombinado() : calcularPreco(servico, periodo));
+        contratacao.setMensagemContraproposta(requisicao.mensagem());
+        contratacao.setContrapropostaEm(LocalDateTime.now());
+        return mudarStatus(contratacao, StatusContratacao.CONTRAPROPOSTA, logado, requisicao.mensagem());
+    }
+
+    @PostMapping("/{id}/aceitar-contraproposta")
+    @Transactional
+    public ContratacaoResposta aceitarContraproposta(@PathVariable Long id, @AuthenticationPrincipal Usuario logado) {
+        expirador.expirarVencidas();
+        Contratacao contratacao = buscarOu404(id);
+        if (!ehCliente(contratacao, logado)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "só o cliente pode aceitar a contraproposta");
+        }
+        exigirStatus(contratacao, "aceitar a contraproposta de", EnumSet.of(StatusContratacao.CONTRAPROPOSTA));
+        travarPrestador(contratacao);
+        Periodo periodo = periodoDe(contratacao);
+        exigirDataValida(periodo);
+        exigirDisponibilidade(contratacao.getServico(), periodo);
+        exigirSemConflito(contratacao.getServico(), periodo, contratacao.getId());
+        return mudarStatus(contratacao, StatusContratacao.ACEITA, logado, null);
+    }
+
+    // prestador recusa o pedido ou cliente recusa a contraproposta
     @PostMapping("/{id}/recusar")
     @Transactional
-    public ContratacaoResposta recusar(@PathVariable Long id, @AuthenticationPrincipal Usuario logado) {
+    public ContratacaoResposta recusar(@PathVariable Long id,
+            @Valid @RequestBody(required = false) RecusaRequisicao requisicao, @AuthenticationPrincipal Usuario logado) {
+        expirador.expirarVencidas();
         Contratacao contratacao = buscarOu404(id);
-        exigirPrestador(contratacao, logado, "recusar");
-        exigirStatus(contratacao, "recusar", Set.of(StatusContratacao.PENDENTE));
-        return mudarStatus(contratacao, StatusContratacao.RECUSADA, logado);
+        if (ehPrestador(contratacao, logado)) {
+            exigirStatus(contratacao, "recusar (como prestador)", EnumSet.of(StatusContratacao.PENDENTE));
+        } else if (ehCliente(contratacao, logado)) {
+            exigirStatus(contratacao, "recusar (como cliente)", EnumSet.of(StatusContratacao.CONTRAPROPOSTA));
+        } else {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "só o cliente ou o prestador podem recusar esta contratação");
+        }
+        String motivo = requisicao == null ? null : requisicao.motivo();
+        contratacao.setMotivoRecusa(motivo);
+        return mudarStatus(contratacao, StatusContratacao.RECUSADA, logado, motivo);
     }
 
     @PostMapping("/{id}/cancelar")
     @Transactional
     public ContratacaoResposta cancelar(@PathVariable Long id, @AuthenticationPrincipal Usuario logado) {
+        expirador.expirarVencidas();
         Contratacao contratacao = buscarOu404(id);
         if (!ehCliente(contratacao, logado) && !ehPrestador(contratacao, logado)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "só o cliente ou o prestador podem cancelar esta contratação");
         }
-        exigirStatus(contratacao, "cancelar", Set.of(StatusContratacao.PENDENTE, StatusContratacao.ACEITA));
-        return mudarStatus(contratacao, StatusContratacao.CANCELADA, logado);
+        exigirStatus(contratacao, "cancelar", EnumSet.of(StatusContratacao.PENDENTE,
+                StatusContratacao.CONTRAPROPOSTA, StatusContratacao.ACEITA));
+        return mudarStatus(contratacao, StatusContratacao.CANCELADA, logado, null);
     }
 
     @PostMapping("/{id}/concluir")
     @Transactional
     public ContratacaoResposta concluir(@PathVariable Long id, @AuthenticationPrincipal Usuario logado) {
+        expirador.expirarVencidas();
         Contratacao contratacao = buscarOu404(id);
         exigirPrestador(contratacao, logado, "concluir");
-        exigirStatus(contratacao, "concluir", Set.of(StatusContratacao.ACEITA));
-        return mudarStatus(contratacao, StatusContratacao.CONCLUIDA, logado);
+        exigirStatus(contratacao, "concluir", EnumSet.of(StatusContratacao.ACEITA));
+        if (LocalDate.now(FUSO).isBefore(contratacao.getDataInicio())) {
+            throw regra("a contratação só pode ser concluída a partir da data de início (" + contratacao.getDataInicio() + ")");
+        }
+        return mudarStatus(contratacao, StatusContratacao.CONCLUIDA, logado, null);
     }
 
+    // monta as datas e horas conforme o tipo de cobrança do serviço
+    private static Periodo montarPeriodo(Servico servico, LocalDate dataInicio, LocalDate dataFim,
+            LocalTime horaInicio, Integer quantidadeHoras) {
+        if (servico.getTipoCobranca() == TipoCobranca.POR_HORA) {
+            if (horaInicio == null || quantidadeHoras == null) {
+                throw invalido("serviço cobrado por hora: informe horaInicio e quantidadeHoras");
+            }
+            if (dataFim != null && !dataFim.equals(dataInicio)) {
+                throw invalido("serviço cobrado por hora: o pedido é de um dia só (não informe outra dataFim)");
+            }
+            LocalDateTime inicio = dataInicio.atTime(horaInicio.truncatedTo(ChronoUnit.MINUTES));
+            LocalDateTime fim = inicio.plusHours(quantidadeHoras);
+            if (!fim.toLocalDate().equals(dataInicio)) {
+                throw regra("o atendimento por hora precisa terminar no mesmo dia");
+            }
+            return new Periodo(dataInicio, dataInicio, inicio.toLocalTime(), fim.toLocalTime());
+        }
+        if (horaInicio != null || quantidadeHoras != null) {
+            throw invalido("serviço cobrado por " + servico.getTipoCobranca()
+                    + ": informe só dataInicio e dataFim, sem horaInicio e quantidadeHoras");
+        }
+        LocalDate fim = dataFim == null ? dataInicio : dataFim;
+        if (fim.isBefore(dataInicio)) {
+            throw regra("a dataFim não pode ser antes da dataInicio");
+        }
+        return new Periodo(dataInicio, fim, null, null);
+    }
 
-    private static void exigirFuturo(LocalDateTime dataHora) {
-        if (!dataHora.isAfter(LocalDateTime.now(FUSO))) {
-            throw regra("a data e hora desejadas precisam estar no futuro (horário de Brasília)");
+    private static Periodo periodoDe(Contratacao c) {
+        return new Periodo(c.getDataInicio(), c.getDataFim(), c.getHoraInicio(), c.getHoraFim());
+    }
+
+    private static void aplicarPeriodo(Contratacao c, Periodo periodo) {
+        c.setDataInicio(periodo.dataInicio());
+        c.setDataFim(periodo.dataFim());
+        c.setHoraInicio(periodo.horaInicio());
+        c.setHoraFim(periodo.horaFim());
+    }
+
+    // calcula o preço pelo tipo de cobrança
+    private static BigDecimal calcularPreco(Servico servico, Periodo periodo) {
+        return switch (servico.getTipoCobranca()) {
+            case POR_HORA -> servico.getPreco().multiply(BigDecimal.valueOf(periodo.horas()));
+            case POR_DIA -> servico.getPreco().multiply(BigDecimal.valueOf(periodo.dias()));
+            case POR_TRABALHO, POR_M2 -> servico.getPreco();
+        };
+    }
+
+    // confere se a data é hoje ou no futuro
+    private static void exigirDataValida(Periodo periodo) {
+        LocalDateTime agora = LocalDateTime.now(FUSO);
+        if (periodo.dataInicio().isBefore(agora.toLocalDate())) {
+            throw regra("a dataInicio precisa ser hoje ou no futuro (horário de Brasília)");
+        }
+        if (periodo.porHora() && !periodo.dataInicio().atTime(periodo.horaInicio()).isAfter(agora)) {
+            throw regra("o horário de início já passou (horário de Brasília)");
         }
     }
 
-    // confere se o horário cabe na disponibilidade
-    private void exigirDentroDaDisponibilidade(PrestadorPerfil prestador, LocalDateTime inicio) {
-        LocalDateTime fim = inicio.plus(DURACAO_ATENDIMENTO);
-        DiaSemana dia = DiaSemana.de(inicio.getDayOfWeek());
-        boolean cabe = fim.toLocalDate().equals(inicio.toLocalDate())
-                && disponibilidadeRepositorio.findByPrestadorIdAndDiaSemana(prestador.getId(), dia).stream()
-                        .anyMatch(d -> !inicio.toLocalTime().isBefore(d.getHoraInicio())
-                                && !fim.toLocalTime().isAfter(d.getHoraFim()));
-        if (!cabe) {
-            throw regra("o prestador não atende neste horário: o atendimento (" + DURACAO_ATENDIMENTO.toHours()
-                    + "h a partir de " + inicio.toLocalTime() + ") precisa caber numa disponibilidade de " + dia);
+    // confere se o pedido cabe na disponibilidade do prestador
+    private void exigirDisponibilidade(Servico servico, Periodo periodo) {
+        List<Disponibilidade> janelas = disponibilidadeRepositorio.findByPrestadorId(servico.getPrestador().getId());
+        if (periodo.porHora()) {
+            DiaSemana dia = DiaSemana.de(periodo.dataInicio().getDayOfWeek());
+            boolean cabe = janelas.stream().anyMatch(d -> d.getDiaSemana() == dia
+                    && !periodo.horaInicio().isBefore(d.getHoraInicio())
+                    && !periodo.horaFim().isAfter(d.getHoraFim()));
+            if (!cabe) {
+                throw regra("o prestador não atende neste horário: " + periodo.horaInicio() + "-"
+                        + periodo.horaFim() + " precisa caber numa disponibilidade de " + dia);
+            }
+            return;
+        }
+        Set<DiaSemana> diasComJanela = janelas.stream().map(Disponibilidade::getDiaSemana)
+                .collect(Collectors.toSet());
+        for (LocalDate data = periodo.dataInicio(); !data.isAfter(periodo.dataFim())
+                && data.isBefore(periodo.dataInicio().plusDays(7)); data = data.plusDays(1)) {
+            DiaSemana dia = DiaSemana.de(data.getDayOfWeek());
+            if (!diasComJanela.contains(dia)) {
+                throw regra("o prestador não atende em " + dia + " (" + data + ")");
+            }
         }
     }
 
-    // confere se já tem contratação aceita no horário
-    private void exigirSemConflito(PrestadorPerfil prestador, LocalDateTime inicio, Long idIgnorado) {
-        boolean conflito = repositorio.existeNoIntervalo(prestador.getId(), StatusContratacao.ACEITA,
-                inicio.minus(DURACAO_ATENDIMENTO), inicio.plus(DURACAO_ATENDIMENTO), idIgnorado);
-        if (conflito) {
-            throw regra("o prestador já tem uma contratação aceita que conflita com este horário");
+    // confere se já tem contratação aceita que cruza com o pedido
+    private void exigirSemConflito(Servico servico, Periodo periodo, Long idIgnorado) {
+        List<Contratacao> aceitas = repositorio.doPrestadorNasDatas(servico.getPrestador().getId(),
+                StatusContratacao.ACEITA, periodo.dataInicio(), periodo.dataFim(), idIgnorado);
+        for (Contratacao outra : aceitas) {
+            boolean conflita = !periodo.porHora() || outra.getHoraInicio() == null
+                    || (periodo.horaInicio().isBefore(outra.getHoraFim())
+                            && outra.getHoraInicio().isBefore(periodo.horaFim()));
+            if (conflita) {
+                throw regra("o prestador já tem uma contratação aceita que conflita com estas datas (contratação "
+                        + outra.getId() + ")");
+            }
         }
+    }
+
+
+    // trava o prestador
+    private void travarPrestador(Contratacao contratacao) {
+        prestadorRepositorio.travar(contratacao.getServico().getPrestador().getId()).orElseThrow();
     }
 
     private static void exigirPrestador(Contratacao contratacao, Usuario logado, String acao) {
@@ -250,7 +441,7 @@ public class ContratacaoRecurso {
         if (!permitidos.contains(contratacao.getStatus())) {
             throw regra("não é possível " + acao + " uma contratação " + contratacao.getStatus()
                     + ": só é permitido a partir de " + String.join(" ou ",
-                            permitidos.stream().map(Enum::name).sorted().toList()));
+                            permitidos.stream().map(Enum::name).toList()));
         }
     }
 
@@ -263,10 +454,13 @@ public class ContratacaoRecurso {
     }
 
     // muda o status e salva no histórico
-    private ContratacaoResposta mudarStatus(Contratacao contratacao, StatusContratacao novo, Usuario logado) {
-        historicoRepositorio.save(new ContratacaoHistorico(contratacao, logado, contratacao.getStatus(), novo));
+    private ContratacaoResposta mudarStatus(Contratacao contratacao, StatusContratacao novo, Usuario logado,
+            String mensagem) {
+        StatusContratacao anterior = contratacao.getStatus();
         contratacao.setStatus(novo);
-        return ContratacaoResposta.de(repositorio.saveAndFlush(contratacao), logado);
+        repositorio.saveAndFlush(contratacao);
+        historicoRepositorio.save(new ContratacaoHistorico(contratacao, logado, anterior, mensagem));
+        return ContratacaoResposta.de(contratacao, logado);
     }
 
     private static boolean ehCliente(Contratacao contratacao, Usuario logado) {
@@ -284,5 +478,9 @@ public class ContratacaoRecurso {
 
     private static ResponseStatusException regra(String mensagem) {
         return new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, mensagem);
+    }
+
+    private static ResponseStatusException invalido(String mensagem) {
+        return new ResponseStatusException(HttpStatus.BAD_REQUEST, mensagem);
     }
 }

@@ -1,7 +1,9 @@
 package com.trampix.entidades;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -57,17 +59,39 @@ public class Contratacao {
     private StatusContratacao status = StatusContratacao.PENDENTE;
 
     @NotNull
-    @Column(name = "data_hora_desejada", nullable = false)
-    private LocalDateTime dataHoraDesejada;
+    @Column(name = "data_inicio", nullable = false)
+    private LocalDate dataInicio;
+
+    @NotNull
+    @Column(name = "data_fim", nullable = false)
+    private LocalDate dataFim;
+
+    // horas só no pedido por hora
+    @Column(name = "hora_inicio")
+    private LocalTime horaInicio;
+
+    @Column(name = "hora_fim")
+    private LocalTime horaFim;
 
     @Size(max = 1000)
     @Column(length = 1000)
     private String observacao;
 
-    // preço do serviço na hora do pedido
+    // preço calculado no pedido ou definido na contraproposta
     @NotNull
     @Column(name = "preco_combinado", nullable = false, precision = 10, scale = 2)
     private BigDecimal precoCombinado;
+
+    @Size(max = 500)
+    @Column(name = "mensagem_contraproposta", length = 500)
+    private String mensagemContraproposta;
+
+    @Column(name = "contraproposta_em")
+    private LocalDateTime contrapropostaEm;
+
+    @Size(max = 500)
+    @Column(name = "motivo_recusa", length = 500)
+    private String motivoRecusa;
 
     @CreationTimestamp
     @Column(name = "criado_em", nullable = false, updatable = false)

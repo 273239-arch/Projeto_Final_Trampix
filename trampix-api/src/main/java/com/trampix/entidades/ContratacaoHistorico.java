@@ -1,6 +1,9 @@
 package com.trampix.entidades;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Immutable;
@@ -43,10 +46,9 @@ public class ContratacaoHistorico {
     @JoinColumn(name = "contratacao_id", nullable = false, updatable = false)
     private Contratacao contratacao;
 
-    // usuário que mudou o status
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "autor_id", nullable = false, updatable = false)
+    // usuário que mudou o status (nulo quando foi o sistema)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "autor_id", updatable = false)
     private Usuario autor;
 
     @Enumerated(EnumType.STRING)
@@ -60,15 +62,41 @@ public class ContratacaoHistorico {
     @Column(name = "status_novo", nullable = false, length = 20, updatable = false)
     private StatusContratacao statusNovo;
 
+    // cópia dos dados da contratação neste passo
+    @Column(name = "data_inicio", nullable = false, updatable = false)
+    private LocalDate dataInicio;
+
+    @Column(name = "data_fim", nullable = false, updatable = false)
+    private LocalDate dataFim;
+
+    @Column(name = "hora_inicio", updatable = false)
+    private LocalTime horaInicio;
+
+    @Column(name = "hora_fim", updatable = false)
+    private LocalTime horaFim;
+
+    @Column(name = "preco_combinado", nullable = false, precision = 10, scale = 2, updatable = false)
+    private BigDecimal precoCombinado;
+
+    @Column(length = 1000, updatable = false)
+    private String mensagem;
+
     @CreationTimestamp
     @Column(name = "criado_em", nullable = false, updatable = false)
     private LocalDateTime criadoEm;
 
+    // monta a linha com os dados atuais da contratação
     public ContratacaoHistorico(Contratacao contratacao, Usuario autor, StatusContratacao statusAnterior,
-            StatusContratacao statusNovo) {
+            String mensagem) {
         this.contratacao = contratacao;
         this.autor = autor;
         this.statusAnterior = statusAnterior;
-        this.statusNovo = statusNovo;
+        this.statusNovo = contratacao.getStatus();
+        this.dataInicio = contratacao.getDataInicio();
+        this.dataFim = contratacao.getDataFim();
+        this.horaInicio = contratacao.getHoraInicio();
+        this.horaFim = contratacao.getHoraFim();
+        this.precoCombinado = contratacao.getPrecoCombinado();
+        this.mensagem = mensagem;
     }
 }
