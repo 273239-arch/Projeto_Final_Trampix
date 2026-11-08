@@ -10,6 +10,7 @@ import com.trampix.entidades.Servico;
 import com.trampix.entidades.Usuario;
 import com.trampix.entidades.enums.StatusContratacao;
 import com.trampix.entidades.enums.TipoCobranca;
+import com.trampix.recursos.ServicoResposta.Resumo;
 
 // dados da contratação devolvidos no JSON
 public record ContratacaoResposta(
@@ -31,10 +32,14 @@ public record ContratacaoResposta(
         LocalDateTime criadoEm,
         LocalDateTime atualizadoEm) {
 
-    public record ServicoResumo(Long id, String titulo, TipoCobranca tipoCobranca) {
+    public record ServicoResumo(Long id, String titulo, TipoCobranca tipoCobranca, Resumo categoria, Resumo subcategoria) {
     }
 
-    public record ParteResumo(Long id, String nome, String cidade, String uf, String telefone) {
+    public record ParteResumo(Long id, String nome, String cidade, String uf, String telefone, Endereco endereco) {
+    }
+
+    public record Endereco(String logradouro, String numero, String complemento, String bairro, String cidade,
+            String uf, String cep) {
     }
 
     public static ContratacaoResposta de(Contratacao contratacao, Usuario logado) {
@@ -58,9 +63,11 @@ public record ContratacaoResposta(
                 contratacao.getContrapropostaEm(),
                 contratacao.getMotivoRecusa(),
                 expiraEm(contratacao),
-                new ServicoResumo(servico.getId(), servico.getTitulo(), servico.getTipoCobranca()),
-                parte(cliente, aceita && logadoEhPrestador),
-                parte(prestador, aceita && logadoEhCliente),
+                new ServicoResumo(servico.getId(), servico.getTitulo(), servico.getTipoCobranca(),
+                        new Resumo(servico.getCategoria().getId(), servico.getCategoria().getNome()),
+                        new Resumo(servico.getSubcategoria().getId(), servico.getSubcategoria().getNome())),
+                parte(cliente, aceita && logadoEhPrestador, aceita && logadoEhPrestador),
+                parte(prestador, aceita && logadoEhCliente, false),
                 contratacao.getCriadoEm(),
                 contratacao.getAtualizadoEm());
     }
@@ -74,8 +81,13 @@ public record ContratacaoResposta(
         };
     }
 
-    private static ParteResumo parte(Usuario usuario, boolean mostrarTelefone) {
+    // telefone e endereço só aparecem quando liberados
+    private static ParteResumo parte(Usuario usuario, boolean mostrarTelefone, boolean mostrarEndereco) {
+        Endereco endereco = mostrarEndereco
+                ? new Endereco(usuario.getLogradouro(), usuario.getNumero(), usuario.getComplemento(),
+                        usuario.getBairro(), usuario.getCidade(), usuario.getUf(), usuario.getCep())
+                : null;
         return new ParteResumo(usuario.getId(), usuario.getNome(), usuario.getCidade(), usuario.getUf(),
-                mostrarTelefone ? usuario.getTelefone() : null);
+                mostrarTelefone ? usuario.getTelefone() : null, endereco);
     }
 }

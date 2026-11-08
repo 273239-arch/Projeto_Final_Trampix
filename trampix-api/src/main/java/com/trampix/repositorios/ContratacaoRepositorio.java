@@ -22,7 +22,7 @@ public interface ContratacaoRepositorio extends JpaRepository<Contratacao, Long>
     }
 
     // lista as contratações com filtros opcionais
-    @EntityGraph(attributePaths = { "servico", "servico.prestador", "servico.prestador.usuario", "cliente" })
+    @EntityGraph(attributePaths = { "servico", "servico.prestador", "servico.prestador.usuario", "servico.categoria", "servico.subcategoria", "cliente" })
     @Query("""
             select c from Contratacao c
             where (:servicoId is null or c.servico.id = :servicoId)
