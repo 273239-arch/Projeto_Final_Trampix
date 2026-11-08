@@ -1,0 +1,101 @@
+<section class="pagina">
+  @if (carregando()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Carregando serviço" />
+  } @else if (erro() === 'nao-encontrado') {
+    <div class="estado">
+      <mat-icon>search_off</mat-icon>
+      <p>Serviço não encontrado ou não está mais disponível.</p>
+      <a mat-flat-button class="botao-verde" routerLink="/">Ver outros serviços</a>
+    </div>
+  } @else if (erro() === 'falha') {
+    <div class="estado">
+      <mat-icon>cloud_off</mat-icon>
+      <p>Não foi possível carregar o serviço.</p>
+      <button mat-flat-button class="botao-verde" type="button" (click)="carregar()">
+        Tentar de novo
+      </button>
+    </div>
+  } @else if (servico(); as servico) {
+    <div class="colunas">
+      <div class="principal">
+        <p class="categoria">
+          <mat-icon>sell</mat-icon>
+          {{ servico.categoria.nome }} › {{ servico.subcategoria.nome }}
+        </p>
+        <h1 class="titulo-secao">{{ servico.titulo }}</h1>
+
+        <h2 class="subtitulo">Descrição Completa do Serviço</h2>
+        @if (servico.descricao) {
+          <p class="descricao">{{ servico.descricao }}</p>
+        } @else {
+          <p class="aviso">O prestador não escreveu uma descrição.</p>
+        }
+
+        @if (solicitando()) {
+          <app-solicitar
+            id="solicitar"
+            [servico]="servico"
+            [disponibilidades]="disponibilidades()"
+            (fechar)="solicitando.set(false)"
+          />
+        }
+      </div>
+
+      <aside class="lateral">
+        <div class="prestador">
+          <mat-icon class="avatar" aria-hidden="true">account_circle</mat-icon>
+          <div>
+            <p class="nome">
+              {{ servico.prestador.nome }}
+              @if (servico.prestador.verificado) {
+                <mat-icon class="verificado" aria-label="Prestador verificado">verified</mat-icon>
+              }
+            </p>
+            <p class="profissao">{{ servico.categoria.nome }}</p>
+            @if (servico.prestador.cidade) {
+              <p class="local">
+                <mat-icon>location_on</mat-icon>
+                {{ servico.prestador.cidade }}{{ servico.prestador.uf ? ' - ' + servico.prestador.uf : '' }}
+              </p>
+            }
+          </div>
+        </div>
+
+        <dl class="caixa">
+          <dt>Preço:</dt>
+          <dd>
+            {{ servico.preco | currency: 'BRL' }} {{ sufixoCobranca[servico.tipoCobranca] }}
+          </dd>
+        </dl>
+
+        <dl class="caixa">
+          <dt>Tipo de cobrança:</dt>
+          <dd>{{ nomeCobranca[servico.tipoCobranca] }}</dd>
+          <dt>Categoria:</dt>
+          <dd>{{ servico.categoria.nome }}</dd>
+          <dt>Subcategoria:</dt>
+          <dd>{{ servico.subcategoria.nome }}</dd>
+        </dl>
+
+        @if (disponibilidades(); as lista) {
+          <dl class="caixa">
+            <dt>Atende:</dt>
+            @for (d of lista; track d.id) {
+              <dd>{{ descreverDisponibilidade(d) }}</dd>
+            } @empty {
+              <dd class="aviso">Sem horários cadastrados.</dd>
+            }
+          </dl>
+        }
+
+        @if (ehMeuServico()) {
+          <p class="aviso">Este serviço é seu.</p>
+        } @else if (!solicitando()) {
+          <button mat-flat-button class="botao-verde solicitar" type="button" (click)="solicitar()">
+            Solicitar serviço
+          </button>
+        }
+      </aside>
+    </div>
+  }
+</section>

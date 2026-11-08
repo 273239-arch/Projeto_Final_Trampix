@@ -26,7 +26,7 @@ describe('ServicoApi', () => {
   });
 
   it('filtra por categoria com ?categoriaId=', () => {
-    service.listar(3).subscribe();
+    service.listar({ categoriaId: 3 }).subscribe();
     http.expectOne(`${environment.apiUrl}/servicos?categoriaId=3`).flush([]);
   });
 });

@@ -1,0 +1,121 @@
+.cartao {
+  padding: 16px 18px;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 1px 6px rgb(0 0 0 / 0.16);
+}
+
+.topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+}
+
+.numero,
+.suave {
+  font-size: 12px;
+  color: var(--trampix-texto-suave);
+}
+
+// Selo do status, com a cor de cada situação.
+.status {
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--trampix-cinza);
+  color: var(--trampix-texto);
+}
+
+.status-PENDENTE,
+.status-CONTRAPROPOSTA {
+  background: #fff4d6;
+  color: #8a6100;
+}
+
+.status-ACEITA,
+.status-CONCLUIDA {
+  background: var(--trampix-verde-claro);
+  color: var(--trampix-verde);
+}
+
+.status-RECUSADA {
+  background: #fdecea;
+  color: var(--trampix-vermelho);
+}
+
+.titulo {
+  margin: 0;
+  font-size: 16px;
+
+  a {
+    color: var(--trampix-texto);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.categoria {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--trampix-verde);
+}
+
+.dados {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px 16px;
+  margin: 12px 0 0;
+
+  dt {
+    font-size: 12px;
+    color: var(--trampix-texto-suave);
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.preco {
+  font-weight: 700;
+}
+
+.telefone {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--trampix-azul);
+  font-weight: 500;
+
+  mat-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+  }
+}
+
+.bloco {
+  margin: 12px 0 0;
+  padding: 8px 10px;
+  border-radius: 4px;
+  background: var(--trampix-cinza);
+  white-space: pre-line;
+}
+
+.contraproposta {
+  background: #fff4d6;
+}
+
+.recusa {
+  background: #fdecea;
+}
+
+.acoes:not(:empty) {
+  margin-top: 14px;
+}

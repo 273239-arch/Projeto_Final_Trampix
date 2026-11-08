@@ -1,0 +1,110 @@
+<section class="pagina">
+  <h1 class="titulo-secao">Meus pedidos</h1>
+
+  @if (carregando()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Carregando pedidos" />
+  } @else if (erro()) {
+    <div class="estado">
+      <mat-icon>cloud_off</mat-icon>
+      <p>Não foi possível carregar os seus pedidos.</p>
+      <button mat-flat-button class="botao-verde" type="button" (click)="carregar()">
+        Tentar de novo
+      </button>
+    </div>
+  } @else {
+    <div class="lista">
+      @for (pedido of pedidos(); track pedido.id) {
+        <app-cartao-pedido [pedido]="pedido" papel="cliente" [servico]="servicos().get(pedido.servico.id)">
+          @switch (pedido.status) {
+            @case ('CONTRAPROPOSTA') {
+              @if (painelAberto(pedido.id, 'recusar')) {
+                <div class="painel">
+                  <label class="rotulo-campo" [for]="'motivo-' + pedido.id">Motivo (opcional)</label>
+                  <mat-form-field appearance="outline" class="campo">
+                    <textarea
+                      [id]="'motivo-' + pedido.id"
+                      matInput
+                      rows="2"
+                      maxlength="500"
+                      [formControl]="motivoRecusa"
+                    ></textarea>
+                    <mat-hint align="end">{{ motivoRecusa.value.length }}/500</mat-hint>
+                  </mat-form-field>
+                  <div class="botoes">
+                    <button
+                      mat-flat-button
+                      class="botao-vermelho"
+                      type="button"
+                      [disabled]="processando() === pedido.id"
+                      (click)="recusar(pedido, 'Contraproposta recusada.')"
+                    >
+                      Recusar contraproposta
+                    </button>
+                    <button mat-button type="button" (click)="fecharPainel()">Voltar</button>
+                  </div>
+                </div>
+              } @else {
+                <div class="botoes">
+                  <button
+                    mat-flat-button
+                    class="botao-verde"
+                    type="button"
+                    [disabled]="processando() === pedido.id"
+                    (click)="aceitarContraproposta(pedido)"
+                  >
+                    Aceitar contraproposta
+                  </button>
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="processando() === pedido.id"
+                    (click)="abrirPainel(pedido.id, 'recusar')"
+                  >
+                    Recusar
+                  </button>
+                </div>
+              }
+            }
+            @case ('PENDENTE') {
+              <ng-container *ngTemplateOutlet="botaoCancelar; context: { $implicit: pedido }" />
+            }
+            @case ('ACEITA') {
+              <ng-container *ngTemplateOutlet="botaoCancelar; context: { $implicit: pedido }" />
+            }
+          }
+        </app-cartao-pedido>
+      } @empty {
+        <div class="estado">
+          <mat-icon>receipt_long</mat-icon>
+          <p>Você ainda não fez nenhum pedido.</p>
+          <a mat-flat-button class="botao-verde" routerLink="/">Encontrar um profissional</a>
+        </div>
+      }
+    </div>
+  }
+</section>
+
+<!-- Botão "Cancelar pedido" com confirmação -->
+<ng-template #botaoCancelar let-pedido>
+  @if (painelAberto(pedido.id, 'cancelar')) {
+    <div class="painel">
+      <p>Cancelar este pedido? Essa ação não pode ser desfeita.</p>
+      <div class="botoes">
+        <button
+          mat-flat-button
+          class="botao-vermelho"
+          type="button"
+          [disabled]="processando() === pedido.id"
+          (click)="cancelar(pedido)"
+        >
+          Sim, cancelar
+        </button>
+        <button mat-button type="button" (click)="fecharPainel()">Voltar</button>
+      </div>
+    </div>
+  } @else {
+    <button mat-stroked-button type="button" class="botao-cancelar" (click)="abrirPainel(pedido.id, 'cancelar')">
+      Cancelar pedido
+    </button>
+  }
+</ng-template>

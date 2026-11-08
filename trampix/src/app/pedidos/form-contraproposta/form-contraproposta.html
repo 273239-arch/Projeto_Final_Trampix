@@ -1,0 +1,114 @@
+<form class="painel-form" [formGroup]="form" (ngSubmit)="enviar()" novalidate>
+  <h3 class="subtitulo">Contraproposta</h3>
+
+  @if (erroGeral()) {
+    <p class="erro-geral" role="alert">
+      <mat-icon>error</mat-icon>
+      {{ erroGeral() }}
+    </p>
+  }
+
+  <div class="linha">
+    <div>
+      <label class="rotulo-campo" [for]="'cp-data-' + pedido().id">
+        {{ porHora() ? 'Data' : 'Data de início' }} <span class="obrigatorio">*</span>
+      </label>
+      <mat-form-field appearance="outline" class="campo">
+        <input [id]="'cp-data-' + pedido().id" matInput type="date" formControlName="dataInicio" [min]="hoje" required />
+        <mat-error>{{ erro('dataInicio') }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    @if (porHora()) {
+      <div>
+        <label class="rotulo-campo" [for]="'cp-hora-' + pedido().id">Hora de início <span class="obrigatorio">*</span></label>
+        <mat-form-field appearance="outline" class="campo">
+          <input [id]="'cp-hora-' + pedido().id" matInput type="time" formControlName="horaInicio" required />
+          <mat-error>{{ erro('horaInicio') }}</mat-error>
+        </mat-form-field>
+      </div>
+      <div>
+        <label class="rotulo-campo" [for]="'cp-horas-' + pedido().id">Horas <span class="obrigatorio">*</span></label>
+        <mat-form-field appearance="outline" class="campo">
+          <input
+            [id]="'cp-horas-' + pedido().id"
+            matInput
+            type="number"
+            min="1"
+            max="24"
+            step="1"
+            formControlName="quantidadeHoras"
+            required
+          />
+          <mat-error>{{ erro('quantidadeHoras') }}</mat-error>
+        </mat-form-field>
+      </div>
+    } @else {
+      <div>
+        <label class="rotulo-campo" [for]="'cp-fim-' + pedido().id">Data de fim</label>
+        <mat-form-field appearance="outline" class="campo">
+          <input
+            [id]="'cp-fim-' + pedido().id"
+            matInput
+            type="date"
+            formControlName="dataFim"
+            [min]="form.controls.dataInicio.value || hoje"
+          />
+          <mat-hint>Em branco: só um dia.</mat-hint>
+          <mat-error>{{ erro('dataFim') }}</mat-error>
+        </mat-form-field>
+      </div>
+    }
+
+    <div>
+      <label class="rotulo-campo" [for]="'cp-preco-' + pedido().id">Preço total (R$)</label>
+      <mat-form-field appearance="outline" class="campo">
+        <input
+          [id]="'cp-preco-' + pedido().id"
+          matInput
+          type="number"
+          min="0.01"
+          step="0.01"
+          formControlName="precoCombinado"
+          [placeholder]="(pedido().precoCombinado | number: '1.2-2') ?? ''"
+        />
+        <mat-hint>
+          Em branco: calculado pelo preço do serviço
+          @if (servico(); as s) {
+            ({{ s.preco | currency: 'BRL' }})
+          }
+        </mat-hint>
+        <mat-error>{{ erro('precoCombinado') }}</mat-error>
+      </mat-form-field>
+    </div>
+  </div>
+
+  @if (erroPeriodo()) {
+    <p class="erro-periodo" role="alert">{{ erroPeriodo() }}</p>
+  }
+
+  <label class="rotulo-campo" [for]="'cp-motivo-' + pedido().id">Motivo <span class="obrigatorio">*</span></label>
+  <mat-form-field appearance="outline" class="campo">
+    <textarea
+      [id]="'cp-motivo-' + pedido().id"
+      matInput
+      rows="3"
+      maxlength="500"
+      formControlName="motivo"
+      placeholder="Explique ao cliente a mudança (10 a 500 caracteres)."
+      required
+    ></textarea>
+    <mat-hint align="end">{{ tamanhoMotivo() }}/500</mat-hint>
+    <mat-error>{{ erro('motivo') }}</mat-error>
+  </mat-form-field>
+
+  @if (enviando()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Enviando contraproposta" />
+  }
+  <div class="botoes">
+    <button mat-flat-button class="botao-azul" type="submit" [disabled]="enviando()">
+      Enviar contraproposta
+    </button>
+    <button mat-button type="button" (click)="fechar.emit()" [disabled]="enviando()">Voltar</button>
+  </div>
+</form>

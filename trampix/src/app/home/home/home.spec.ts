@@ -23,7 +23,7 @@ describe('Home', () => {
   });
 
   it('mostra os cartões de serviço', async () => {
-    http.expectOne(`${environment.apiUrl}/categorias`).flush([{ id: 1, nome: 'Reformas', ativa: true }]);
+    http.expectOne(`${environment.apiUrl}/categorias`).flush([{ id: 1, nome: 'Reformas', categoriaPaiId: null, subcategorias: [] }]);
     http.expectOne(`${environment.apiUrl}/servicos`).flush([
       {
         id: 7,
@@ -31,7 +31,8 @@ describe('Home', () => {
         preco: 6000,
         tipoCobranca: 'POR_TRABALHO',
         status: 'ATIVO',
-        categoria: { id: 1, nome: 'Reformas', categoriaPaiId: null },
+        categoria: { id: 1, nome: 'Reformas' },
+        subcategoria: { id: 4, nome: 'Revestimento' },
         prestador: { id: 1, usuarioId: 2, nome: 'José Silva', cidade: 'Recife', uf: 'PE', verificado: true },
         criadoEm: '2026-11-01T10:00:00',
       },

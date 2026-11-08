@@ -19,24 +19,61 @@
         <mat-icon class="filtro" aria-hidden="true">filter_alt</mat-icon>
       </form>
 
-      <button
-        mat-icon-button
-        class="usuario"
-        [matMenuTriggerFor]="menuUsuario"
-        aria-label="Conta do usuário"
-      >
-        <mat-icon>account_circle</mat-icon>
-      </button>
+      @if (auth.usuario(); as usuario) {
+        <!-- Logado: nome, links dos pedidos e "Sair" (no celular, ficam no menu) -->
+        <nav class="conta" aria-label="Sua conta">
+          <span class="nome" [title]="usuario.nome">
+            <mat-icon>account_circle</mat-icon>
+            {{ usuario.nome }}
+          </span>
+          <a mat-button routerLink="/pedidos" routerLinkActive="ativo" [routerLinkActiveOptions]="{ exact: true }">
+            Meus pedidos
+          </a>
+          @if (prestador.ehPrestador()) {
+            <a mat-button routerLink="/pedidos/recebidos" routerLinkActive="ativo">Pedidos recebidos</a>
+          }
+          <button mat-button type="button" class="sair" (click)="sair()">
+            <mat-icon>logout</mat-icon>
+            Sair
+          </button>
+        </nav>
 
-      <mat-menu #menuUsuario="matMenu" xPosition="before">
-        @if (auth.usuario(); as usuario) {
+        <button
+          mat-icon-button
+          class="usuario menu-celular"
+          [matMenuTriggerFor]="menuLogado"
+          aria-label="Conta do usuário"
+        >
+          <mat-icon>account_circle</mat-icon>
+        </button>
+        <mat-menu #menuLogado="matMenu" xPosition="before">
           <div class="menu-nome" mat-menu-item disabled>{{ usuario.nome }}</div>
           <mat-divider />
+          <a mat-menu-item routerLink="/pedidos">
+            <mat-icon>receipt_long</mat-icon>
+            <span>Meus pedidos</span>
+          </a>
+          @if (prestador.ehPrestador()) {
+            <a mat-menu-item routerLink="/pedidos/recebidos">
+              <mat-icon>inbox</mat-icon>
+              <span>Pedidos recebidos</span>
+            </a>
+          }
           <button mat-menu-item class="sair" (click)="sair()">
             <mat-icon>logout</mat-icon>
-            <span>Sair da conta</span>
+            <span>Sair</span>
           </button>
-        } @else {
+        </mat-menu>
+      } @else {
+        <button
+          mat-icon-button
+          class="usuario"
+          [matMenuTriggerFor]="menuVisitante"
+          aria-label="Entrar ou criar conta"
+        >
+          <mat-icon>account_circle</mat-icon>
+        </button>
+        <mat-menu #menuVisitante="matMenu" xPosition="before">
           <a mat-menu-item routerLink="/login">
             <mat-icon>login</mat-icon>
             <span>Entrar</span>
@@ -45,8 +82,8 @@
             <mat-icon>person_add</mat-icon>
             <span>Criar conta</span>
           </a>
-        }
-      </mat-menu>
+        </mat-menu>
+      }
     }
   </header>
 

@@ -1,8 +1,11 @@
 package com.trampix.recursos;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,7 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.trampix.entidades.Categoria;
+import com.trampix.entidades.enums.StatusSubcategoria;
 import com.trampix.repositorios.CategoriaRepositorio;
+import com.trampix.repositorios.SubcategoriaRepositorio;
 
 import jakarta.validation.Valid;
 
@@ -25,25 +30,35 @@ import jakarta.validation.Valid;
 public class CategoriaRecurso {
 
     private final CategoriaRepositorio repositorio;
+    private final SubcategoriaRepositorio subcategoriaRepositorio;
 
-    public CategoriaRecurso(CategoriaRepositorio repositorio) {
+    public CategoriaRecurso(CategoriaRepositorio repositorio, SubcategoriaRepositorio subcategoriaRepositorio) {
         this.repositorio = repositorio;
+        this.subcategoriaRepositorio = subcategoriaRepositorio;
     }
 
-    // lista as categorias ativas
+    // lista as categorias ativas com as subcategorias ativas
     @GetMapping
-    public List<Categoria> listar() {
-        return repositorio.findByAtivaTrue();
+    @Transactional(readOnly = true)
+    public List<CategoriaResposta> listar() {
+        Map<Long, List<SubcategoriaResposta>> porCategoria = subcategoriaRepositorio
+                .findByStatusOrderById(StatusSubcategoria.ATIVA).stream()
+                .map(SubcategoriaResposta::de)
+                .collect(Collectors.groupingBy(SubcategoriaResposta::categoriaId));
+        return repositorio.findByAtivaTrueOrderById().stream()
+                .map(c -> CategoriaResposta.de(c, porCategoria.getOrDefault(c.getId(), List.of())))
+                .toList();
     }
 
     @GetMapping("/{id}")
-    public Categoria buscar(@PathVariable Long id) {
-        return buscarOu404(id);
+    @Transactional(readOnly = true)
+    public CategoriaResposta buscar(@PathVariable Long id) {
+        return resposta(buscarOu404(id));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Categoria cadastrar(@Valid @RequestBody Categoria categoria) {
+    public CategoriaResposta cadastrar(@Valid @RequestBody Categoria categoria) {
         Categoria pai = resolverPai(categoria.getCategoriaPai(), null);
         if (nomeRepetido(categoria.getNome(), pai, null)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "já existe uma categoria com esse nome neste nível");
@@ -51,11 +66,11 @@ public class CategoriaRecurso {
         categoria.setId(null);
         categoria.setAtiva(true);
         categoria.setCategoriaPai(pai);
-        return repositorio.save(categoria);
+        return resposta(repositorio.save(categoria));
     }
 
     @PutMapping("/{id}")
-    public Categoria atualizar(@PathVariable Long id, @Valid @RequestBody Categoria dados) {
+    public CategoriaResposta atualizar(@PathVariable Long id, @Valid @RequestBody Categoria dados) {
         Categoria categoria = buscarOu404(id);
         Categoria pai = resolverPai(dados.getCategoriaPai(), id);
         if (nomeRepetido(dados.getNome(), pai, id)) {
@@ -64,7 +79,7 @@ public class CategoriaRecurso {
         categoria.setNome(dados.getNome());
         categoria.setDescricao(dados.getDescricao());
         categoria.setCategoriaPai(pai);
-        return repositorio.save(categoria);
+        return resposta(repositorio.save(categoria));
     }
 
     // marca a categoria como inativa
@@ -98,6 +113,13 @@ public class CategoriaRecurso {
         return idAtual == null
                 ? repositorio.existsByCategoriaPaiIdAndNomeIgnoreCase(pai.getId(), nome)
                 : repositorio.existsByCategoriaPaiIdAndNomeIgnoreCaseAndIdNot(pai.getId(), nome, idAtual);
+    }
+
+    // monta a resposta com as subcategorias ativas
+    private CategoriaResposta resposta(Categoria categoria) {
+        return CategoriaResposta.de(categoria, subcategoriaRepositorio
+                .findByCategoriaIdAndStatusOrderById(categoria.getId(), StatusSubcategoria.ATIVA).stream()
+                .map(SubcategoriaResposta::de).toList());
     }
 
     private Categoria buscarOu404(Long id) {

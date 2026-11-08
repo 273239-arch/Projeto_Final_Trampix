@@ -50,10 +50,16 @@ public class Servico {
     @JoinColumn(name = "prestador_id", nullable = false)
     private PrestadorPerfil prestador;
 
+    // mesma categoria da subcategoria
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "categoria_id", nullable = false)
     private Categoria categoria;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "subcategoria_id", nullable = false)
+    private Subcategoria subcategoria;
 
     @NotBlank
     @Size(max = 120)

@@ -1,0 +1,143 @@
+.pagina {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px 16px;
+}
+
+// Figma: conteúdo à esquerda, prestador e preço numa coluna estreita à direita.
+.colunas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 40px;
+  align-items: start;
+}
+
+.categoria {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--trampix-texto-suave);
+
+  mat-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+  }
+}
+
+.subtitulo {
+  margin: 24px 0 8px;
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--trampix-verde);
+}
+
+.descricao {
+  margin: 0;
+  white-space: pre-line;
+  line-height: 1.5;
+}
+
+.aviso {
+  color: var(--trampix-texto-suave);
+}
+
+.lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.prestador {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  p {
+    margin: 0;
+  }
+}
+
+.avatar {
+  width: 56px;
+  height: 56px;
+  font-size: 56px;
+  color: var(--trampix-texto-suave);
+}
+
+.nome {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.profissao,
+.local {
+  font-size: 12px;
+  color: var(--trampix-texto-suave);
+}
+
+.local {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+
+  mat-icon {
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+  }
+}
+
+.verificado {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  color: var(--trampix-verde);
+}
+
+// Figma: caixas "Preço:" e "Duração" com borda fina.
+.caixa {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--trampix-borda);
+
+  dt {
+    font-weight: 700;
+  }
+
+  dt:not(:first-child) {
+    margin-top: 6px;
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.solicitar {
+  align-self: center;
+  min-width: 180px;
+}
+
+.estado {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--trampix-texto-suave);
+
+  mat-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 48px;
+  }
+}
+
+@media (max-width: 800px) {
+  .colunas {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}

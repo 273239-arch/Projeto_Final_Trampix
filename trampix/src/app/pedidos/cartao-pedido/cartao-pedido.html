@@ -1,0 +1,77 @@
+<article class="cartao" [attr.aria-label]="'Pedido ' + pedido().id">
+  <header class="topo">
+    <span class="status" [class]="'status-' + pedido().status">
+      {{ nomeStatus[pedido().status] }}
+    </span>
+    <span class="numero">Pedido #{{ pedido().id }} · feito em {{ feitoEm() }}</span>
+  </header>
+
+  <h2 class="titulo">
+    <a [routerLink]="['/servicos', pedido().servico.id]">{{ pedido().servico.titulo }}</a>
+  </h2>
+  @if (servico(); as s) {
+    <p class="categoria">{{ s.categoria.nome }} › {{ s.subcategoria.nome }}</p>
+  }
+
+  <dl class="dados">
+    <div>
+      <dt>{{ papel() === 'cliente' ? 'Prestador' : 'Cliente' }}</dt>
+      <dd>
+        {{ outraParte().nome }}
+        @if (outraParte().cidade) {
+          <span class="suave">· {{ outraParte().cidade }}{{ outraParte().uf ? ' - ' + outraParte().uf : '' }}</span>
+        }
+      </dd>
+    </div>
+    <!-- O back só manda o telefone depois de aceita -->
+    @if (outraParte().telefone) {
+      <div>
+        <dt>Telefone</dt>
+        <dd>
+          <a class="telefone" [href]="linkTelefone()">
+            <mat-icon>call</mat-icon>
+            {{ outraParte().telefone }}
+          </a>
+        </dd>
+      </div>
+    }
+    <div>
+      <dt>{{ pedido().status === 'CONTRAPROPOSTA' ? 'Datas propostas' : 'Datas' }}</dt>
+      <dd>{{ periodo() }} <span class="suave">({{ duracao() }})</span></dd>
+    </div>
+    <div>
+      <dt>{{ pedido().status === 'CONTRAPROPOSTA' ? 'Preço proposto' : 'Preço' }}</dt>
+      <dd class="preco">{{ pedido().precoCombinado | currency: 'BRL' }}</dd>
+    </div>
+    @if (pedido().expiraEm) {
+      <div>
+        <dt>Responder até</dt>
+        <dd>{{ pedido().expiraEm | date: 'dd/MM/yyyy HH:mm' }}</dd>
+      </div>
+    }
+  </dl>
+
+  @if (pedido().observacao) {
+    <p class="bloco"><strong>Observação do cliente:</strong> {{ pedido().observacao }}</p>
+  }
+
+  @if (pedido().status === 'CONTRAPROPOSTA') {
+    <p class="bloco contraproposta">
+      <strong>Contraproposta do prestador:</strong> {{ pedido().motivoContraproposta }}
+    </p>
+  } @else if (pedido().motivoContraproposta) {
+    <p class="bloco suave">
+      <strong>Houve contraproposta:</strong> {{ pedido().motivoContraproposta }}
+    </p>
+  }
+
+  @if (pedido().status === 'RECUSADA') {
+    <p class="bloco recusa">
+      <strong>Motivo da recusa:</strong> {{ pedido().motivoRecusa || 'não informado.' }}
+    </p>
+  }
+
+  <div class="acoes">
+    <ng-content />
+  </div>
+</article>

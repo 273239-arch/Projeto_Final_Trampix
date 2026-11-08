@@ -52,6 +52,8 @@ public class SegurancaConfig {
                         .requestMatchers(HttpMethod.GET, "/categorias", "/categorias/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/servicos", "/servicos/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/usuarios/*/disponibilidades").permitAll()
+                        // prestador ou ADMIN cria subcategoria
+                        .requestMatchers(HttpMethod.POST, "/categorias/*/subcategorias").authenticated()
                         // rotas só de ADMIN
                         .requestMatchers(HttpMethod.GET, "/usuarios").hasRole("ADMIN")
                         .requestMatchers("/categorias", "/categorias/**").hasRole("ADMIN")

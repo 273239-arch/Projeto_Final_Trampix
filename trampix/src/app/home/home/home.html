@@ -26,6 +26,31 @@
           <span class="aviso">Nenhuma categoria cadastrada ainda.</span>
         }
       </mat-chip-listbox>
+
+      <!-- Subcategorias da categoria escolhida -->
+      @if (subcategorias().length) {
+        <mat-chip-listbox
+          class="subcategorias"
+          aria-label="Filtrar por subcategoria"
+          [hideSingleSelectionIndicator]="true"
+        >
+          <mat-chip-option
+            [selected]="subcategoriaId() === null"
+            (click)="filtrarPorSubcategoria(null)"
+          >
+            Todas as subcategorias
+          </mat-chip-option>
+          @for (sub of subcategorias(); track sub.id) {
+            <mat-chip-option
+              [selected]="subcategoriaId() === sub.id"
+              [title]="sub.descricao ?? ''"
+              (click)="filtrarPorSubcategoria(sub.id)"
+            >
+              {{ sub.nome }}
+            </mat-chip-option>
+          }
+        </mat-chip-listbox>
+      }
     }
   </div>
 
@@ -50,12 +75,13 @@
   } @else {
     <div class="grade">
       @for (servico of servicosFiltrados(); track servico.id) {
-        <article class="cartao">
+        <a class="cartao" [routerLink]="['/servicos', servico.id]">
           <!-- O back ainda não tem foto de serviço -->
           <div class="foto" aria-hidden="true">
             <mat-icon>handyman</mat-icon>
           </div>
           <div class="corpo">
+            <p class="categoria">{{ servico.categoria.nome }} · {{ servico.subcategoria.nome }}</p>
             <h2 class="titulo-servico">{{ servico.titulo }}</h2>
             @if (servico.descricao) {
               <p class="descricao">{{ servico.descricao }}</p>
@@ -77,14 +103,14 @@
               }
             </p>
           </div>
-        </article>
+        </a>
       } @empty {
         <div class="estado">
           <mat-icon>search_off</mat-icon>
           @if (busca()) {
             <p>Nenhum serviço encontrado para essa busca.</p>
           } @else {
-            <p>Nenhum serviço disponível nesta categoria ainda.</p>
+            <p>Nenhum serviço disponível neste filtro ainda.</p>
           }
         </div>
       }

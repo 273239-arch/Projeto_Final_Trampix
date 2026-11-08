@@ -25,13 +25,12 @@ public class ServicoRecurso {
         this.repositorio = repositorio;
     }
 
-    // lista os serviços ativos (filtro opcional por categoria)
+    // lista os serviços ativos (filtros opcionais por categoria e subcategoria)
     @GetMapping
-    public List<ServicoResposta> listar(@RequestParam(required = false) Long categoriaId) {
-        var servicos = categoriaId == null
-                ? repositorio.findByStatus(StatusServico.ATIVO)
-                : repositorio.findByCategoriaIdAndStatus(categoriaId, StatusServico.ATIVO);
-        return servicos.stream().map(ServicoResposta::de).toList();
+    public List<ServicoResposta> listar(@RequestParam(required = false) Long categoriaId,
+            @RequestParam(required = false) Long subcategoriaId) {
+        return repositorio.filtrar(StatusServico.ATIVO, categoriaId, subcategoriaId).stream()
+                .map(ServicoResposta::de).toList();
     }
 
     @GetMapping("/{id}")

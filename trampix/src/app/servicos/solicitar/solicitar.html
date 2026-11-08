@@ -1,0 +1,110 @@
+<form class="formulario" [formGroup]="form" (ngSubmit)="enviar()" novalidate>
+  <h2 class="subtitulo">Solicitar serviço</h2>
+
+  @if (diasQueAtende()) {
+    <p class="dica">
+      <mat-icon>schedule</mat-icon>
+      O prestador atende: {{ diasQueAtende() }}.
+    </p>
+  }
+
+  @if (erroGeral()) {
+    <p class="erro-geral" role="alert">
+      <mat-icon>error</mat-icon>
+      {{ erroGeral() }}
+    </p>
+  }
+
+  <div class="linha">
+    <div>
+      <label class="rotulo-campo" for="sol-data">
+        {{ porHora() ? 'Data' : 'Data de início' }} <span class="obrigatorio">*</span>
+      </label>
+      <mat-form-field appearance="outline" class="campo">
+        <input id="sol-data" matInput type="date" formControlName="dataInicio" [min]="hoje" required />
+        <mat-error>{{ erro('dataInicio') }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    @if (porHora()) {
+      <div>
+        <label class="rotulo-campo" for="sol-hora">Hora de início <span class="obrigatorio">*</span></label>
+        <mat-form-field appearance="outline" class="campo">
+          <input id="sol-hora" matInput type="time" formControlName="horaInicio" required />
+          <mat-error>{{ erro('horaInicio') }}</mat-error>
+        </mat-form-field>
+      </div>
+      <div>
+        <label class="rotulo-campo" for="sol-horas">Quantidade de horas <span class="obrigatorio">*</span></label>
+        <mat-form-field appearance="outline" class="campo">
+          <input
+            id="sol-horas"
+            matInput
+            type="number"
+            min="1"
+            max="24"
+            step="1"
+            formControlName="quantidadeHoras"
+            required
+          />
+          <mat-error>{{ erro('quantidadeHoras') }}</mat-error>
+        </mat-form-field>
+      </div>
+    } @else {
+      <div>
+        <label class="rotulo-campo" for="sol-fim">Data de fim</label>
+        <mat-form-field appearance="outline" class="campo">
+          <input
+            id="sol-fim"
+            matInput
+            type="date"
+            formControlName="dataFim"
+            [min]="form.controls.dataInicio.value || hoje"
+          />
+          <mat-hint>Em branco: só um dia.</mat-hint>
+          <mat-error>{{ erro('dataFim') }}</mat-error>
+        </mat-form-field>
+      </div>
+    }
+  </div>
+
+  @if (erroPeriodo()) {
+    <p class="erro-periodo" role="alert">{{ erroPeriodo() }}</p>
+  }
+
+  <label class="rotulo-campo" for="sol-obs">Observação</label>
+  <mat-form-field appearance="outline" class="campo">
+    <textarea
+      id="sol-obs"
+      matInput
+      rows="4"
+      maxlength="1000"
+      formControlName="observacao"
+      placeholder="Conte o que precisa ser feito, o local, se há material..."
+    ></textarea>
+    <mat-hint align="end">{{ tamanhoObservacao() }}/1000</mat-hint>
+    <mat-error>{{ erro('observacao') }}</mat-error>
+  </mat-form-field>
+
+  <p class="estimativa">
+    Preço estimado:
+    @if (estimativa(); as e) {
+      <strong>{{ e.total | currency: 'BRL' }}</strong>
+      @if (e.conta) {
+        <span class="conta">({{ servico().preco | currency: 'BRL' }} × {{ e.conta }})</span>
+      }
+    } @else {
+      <span class="conta">preencha {{ porHora() ? 'as horas' : 'as datas' }} para calcular</span>
+    }
+  </p>
+
+  @if (enviando()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Enviando pedido" />
+  }
+  <div class="acoes">
+    <button mat-flat-button class="botao-verde" type="submit" [disabled]="enviando()">
+      ENVIAR PEDIDO
+    </button>
+    <button mat-button type="button" (click)="fechar.emit()" [disabled]="enviando()">Cancelar</button>
+  </div>
+</form>

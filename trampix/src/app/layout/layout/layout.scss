@@ -76,15 +76,68 @@
   color: var(--trampix-texto);
 }
 
+// Logado: nome, "Meus pedidos", "Pedidos recebidos" e "Sair" à direita.
+.conta {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+
+  a,
+  button {
+    --mat-button-text-label-text-color: var(--trampix-texto);
+    flex-shrink: 0;
+  }
+
+  .ativo {
+    --mat-button-text-label-text-color: var(--trampix-verde);
+    font-weight: 700;
+  }
+}
+
+.nome {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 200px;
+  margin-right: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 500;
+
+  mat-icon {
+    flex-shrink: 0;
+  }
+}
+
+.menu-celular {
+  display: none;
+}
+
 .menu-nome {
   font-weight: 500;
 }
 
 .sair {
+  --mat-button-text-label-text-color: var(--trampix-vermelho);
   color: var(--trampix-vermelho);
 
   mat-icon {
     color: inherit;
+  }
+}
+
+// Sem espaço para os links: eles vão para o menu do ícone de usuário.
+@media (max-width: 900px) {
+  .conta {
+    display: none;
+  }
+
+  .menu-celular {
+    display: inline-flex;
   }
 }
 

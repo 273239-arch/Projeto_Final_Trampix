@@ -1,0 +1,56 @@
+// Estilos das duas listas (Meus pedidos e Pedidos recebidos).
+.pagina {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 20px 16px;
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.botoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.painel {
+  padding: 12px;
+  border-radius: 4px;
+  background: var(--trampix-cinza);
+
+  p {
+    margin: 0 0 10px;
+  }
+}
+
+.dica {
+  font-size: 12px;
+  color: var(--trampix-texto-suave);
+}
+
+.botao-cancelar {
+  --mat-button-outlined-label-text-color: var(--trampix-vermelho);
+}
+
+.botao-vermelho {
+  --mat-button-filled-container-color: var(--trampix-vermelho);
+  --mat-button-filled-label-text-color: #fff;
+  --mat-button-filled-container-shape: 4px;
+}
+
+.estado {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--trampix-texto-suave);
+
+  mat-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 48px;
+  }
+}

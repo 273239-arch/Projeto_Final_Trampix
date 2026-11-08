@@ -1,0 +1,53 @@
+.painel-form {
+  padding: 12px;
+  border-radius: 4px;
+  background: var(--trampix-cinza);
+}
+
+.subtitulo {
+  margin: 0 0 10px;
+  font-size: 15px;
+  color: var(--trampix-verde);
+}
+
+.linha {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0 12px;
+}
+
+.campo {
+  --mat-form-field-outlined-container-color: #fff;
+  background: #fff;
+}
+
+.erro-geral {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  background: #fdecea;
+  color: var(--trampix-vermelho);
+  font-size: 13px;
+
+  mat-icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+}
+
+.erro-periodo {
+  margin: -8px 0 12px;
+  font-size: 12px;
+  color: var(--trampix-vermelho);
+}
+
+.botoes {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}

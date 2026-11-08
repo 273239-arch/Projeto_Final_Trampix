@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import com.trampix.entidades.Categoria;
 import com.trampix.entidades.PrestadorPerfil;
 import com.trampix.entidades.Servico;
+import com.trampix.entidades.Subcategoria;
 import com.trampix.entidades.Usuario;
 import com.trampix.entidades.enums.StatusServico;
 import com.trampix.entidades.enums.TipoCobranca;
@@ -18,11 +19,12 @@ public record ServicoResposta(
         BigDecimal preco,
         TipoCobranca tipoCobranca,
         StatusServico status,
-        CategoriaResumo categoria,
+        Resumo categoria,
+        Resumo subcategoria,
         PrestadorResumo prestador,
         LocalDateTime criadoEm) {
 
-    public record CategoriaResumo(Long id, String nome, Long categoriaPaiId) {
+    public record Resumo(Long id, String nome) {
     }
 
     public record PrestadorResumo(Long id, Long usuarioId, String nome, String cidade, String uf, boolean verificado) {
@@ -30,6 +32,7 @@ public record ServicoResposta(
 
     public static ServicoResposta de(Servico servico) {
         Categoria categoria = servico.getCategoria();
+        Subcategoria subcategoria = servico.getSubcategoria();
         PrestadorPerfil prestador = servico.getPrestador();
         Usuario usuario = prestador.getUsuario();
         return new ServicoResposta(
@@ -39,8 +42,8 @@ public record ServicoResposta(
                 servico.getPreco(),
                 servico.getTipoCobranca(),
                 servico.getStatus(),
-                new CategoriaResumo(categoria.getId(), categoria.getNome(),
-                        categoria.getCategoriaPai() == null ? null : categoria.getCategoriaPai().getId()),
+                new Resumo(categoria.getId(), categoria.getNome()),
+                new Resumo(subcategoria.getId(), subcategoria.getNome()),
                 new PrestadorResumo(prestador.getId(), usuario.getId(), usuario.getNome(),
                         usuario.getCidade(), usuario.getUf(), prestador.isVerificado()),
                 servico.getCriadoEm());

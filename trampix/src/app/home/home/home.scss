@@ -14,6 +14,13 @@
     --mat-chip-elevated-selected-container-color: var(--trampix-verde);
     --mat-chip-selected-label-text-color: #fff;
   }
+
+  // Subcategorias: mesma forma, cor azul para diferenciar da categoria.
+  .subcategorias {
+    display: block;
+    margin-top: 10px;
+    --mat-chip-elevated-selected-container-color: var(--trampix-azul);
+  }
 }
 
 .aviso {
@@ -28,11 +35,31 @@
   gap: 22px;
 }
 
+// O cartão inteiro é o link para o detalhe do serviço.
 .cartao {
+  display: block;
   overflow: hidden;
   border-radius: 4px;
   background: #fff;
   box-shadow: 0 1px 6px rgb(0 0 0 / 0.16);
+  color: inherit;
+  text-decoration: none;
+  transition: box-shadow 0.15s;
+
+  &:hover,
+  &:focus-visible {
+    box-shadow: 0 2px 12px rgb(0 0 0 / 0.24);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--trampix-azul);
+  }
+}
+
+.categoria {
+  margin-bottom: 2px !important;
+  font-size: 11px;
+  color: var(--trampix-verde);
 }
 
 .foto {

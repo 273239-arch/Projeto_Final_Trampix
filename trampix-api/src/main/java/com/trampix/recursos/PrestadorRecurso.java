@@ -14,13 +14,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.trampix.entidades.Categoria;
 import com.trampix.entidades.PrestadorPerfil;
 import com.trampix.entidades.Servico;
+import com.trampix.entidades.Subcategoria;
 import com.trampix.entidades.Usuario;
 import com.trampix.entidades.enums.StatusUsuario;
 import com.trampix.entidades.enums.TipoCobranca;
-import com.trampix.repositorios.CategoriaRepositorio;
 import com.trampix.repositorios.PrestadorPerfilRepositorio;
 import com.trampix.repositorios.ServicoRepositorio;
 import com.trampix.repositorios.UsuarioRepositorio;
@@ -47,7 +46,9 @@ public class PrestadorRecurso {
     }
 
     public record PrimeiroServico(
-            @NotNull Long categoriaId,
+            Long subcategoriaId,
+            Long categoriaId,
+            @Size(max = 40) String novaSubcategoria,
             @NotBlank @Size(max = 120) String titulo,
             @NotBlank @Size(max = 2000) String descricao,
             @NotNull @DecimalMin(value = "0.01", message = "o preço deve ser maior que zero")
@@ -57,14 +58,14 @@ public class PrestadorRecurso {
 
     private final UsuarioRepositorio usuarioRepositorio;
     private final PrestadorPerfilRepositorio prestadorRepositorio;
-    private final CategoriaRepositorio categoriaRepositorio;
+    private final CriadorSubcategoria criadorSubcategoria;
     private final ServicoRepositorio servicoRepositorio;
 
     public PrestadorRecurso(UsuarioRepositorio usuarioRepositorio, PrestadorPerfilRepositorio prestadorRepositorio,
-            CategoriaRepositorio categoriaRepositorio, ServicoRepositorio servicoRepositorio) {
+            CriadorSubcategoria criadorSubcategoria, ServicoRepositorio servicoRepositorio) {
         this.usuarioRepositorio = usuarioRepositorio;
         this.prestadorRepositorio = prestadorRepositorio;
-        this.categoriaRepositorio = categoriaRepositorio;
+        this.criadorSubcategoria = criadorSubcategoria;
         this.servicoRepositorio = servicoRepositorio;
     }
 
@@ -90,9 +91,8 @@ public class PrestadorRecurso {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "este usuário já é prestador");
         }
         PrimeiroServico dados = requisicao.servico();
-        Categoria categoria = categoriaRepositorio.findById(dados.categoriaId())
-                .filter(Categoria::isAtiva)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "categoria não encontrada"));
+        Subcategoria subcategoria = criadorSubcategoria.paraServico(dados.subcategoriaId(), dados.categoriaId(),
+                dados.novaSubcategoria(), logado);
 
         PrestadorPerfil prestador = new PrestadorPerfil();
         prestador.setUsuario(usuario);
@@ -102,7 +102,8 @@ public class PrestadorRecurso {
 
         Servico servico = new Servico();
         servico.setPrestador(prestador);
-        servico.setCategoria(categoria);
+        servico.setCategoria(subcategoria.getCategoria());
+        servico.setSubcategoria(subcategoria);
         servico.setTitulo(dados.titulo());
         servico.setDescricao(dados.descricao());
         servico.setPreco(dados.preco());
