@@ -39,12 +39,11 @@ public class SegurancaConfig {
     @Bean
     public SecurityFilterChain filtros(HttpSecurity http, ConversorJwtUsuario conversor,
             @Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver) throws Exception {
-        // 401 e 403 passam pelo TratadorErros, para sair no mesmo formato JSON dos outros erros.
+        // 401 e 403 no formato do TratadorErros
         AuthenticationEntryPoint naoAutenticado = (req, res, ex) -> resolver.resolveException(req, res, null, ex);
         AccessDeniedHandler semPermissao = (req, res, ex) -> resolver.resolveException(req, res, null, ex);
 
         http
-                // API sem sessão nem cookie: o token vai em cada requisição, então CSRF não se aplica.
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .cors(Customizer.withDefaults())
@@ -52,7 +51,8 @@ public class SegurancaConfig {
                         .requestMatchers(HttpMethod.POST, "/usuarios", "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/categorias", "/categorias/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/servicos", "/servicos/**").permitAll()
-                        // Só ADMIN: listar todos os usuários e mexer no catálogo de categorias.
+                        .requestMatchers(HttpMethod.GET, "/usuarios/*/disponibilidades").permitAll()
+                        // rotas só de ADMIN
                         .requestMatchers(HttpMethod.GET, "/usuarios").hasRole("ADMIN")
                         .requestMatchers("/categorias", "/categorias/**").hasRole("ADMIN")
                         .requestMatchers("/error").permitAll()
@@ -81,7 +81,7 @@ public class SegurancaConfig {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(chave(propriedades))
                 .macAlgorithm(MacAlgorithm.HS256)
                 .build();
-        // Confere validade (exp) e se o token foi emitido por esta API.
+        // confere a validade e o emissor do token
         decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(TokenServico.EMISSOR));
         return decoder;
     }
@@ -91,7 +91,6 @@ public class SegurancaConfig {
         CorsConfiguration cors = new CorsConfiguration();
         cors.setAllowedOrigins(propriedades.origens());
         cors.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
-        // Content-Type também precisa estar liberado: sem ele o navegador barra POST/PUT com JSON.
         cors.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         cors.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource fonte = new UrlBasedCorsConfigurationSource();

@@ -24,7 +24,7 @@ import com.trampix.seguranca.Permissoes;
 
 import jakarta.validation.Valid;
 
-// Cadastro (POST) é público. Listar todos: só ADMIN. Ver, alterar e excluir: só o próprio usuário ou ADMIN.
+// endpoints de usuário
 @RestController
 @RequestMapping("/usuarios")
 public class UsuarioRecurso {
@@ -37,7 +37,6 @@ public class UsuarioRecurso {
         this.passwordEncoder = passwordEncoder;
     }
 
-    // Só ADMIN (regra na SegurancaConfig).
     @GetMapping
     public List<Usuario> listar() {
         return repositorio.findAll();
@@ -62,14 +61,13 @@ public class UsuarioRecurso {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "documento já cadastrado");
         }
         usuario.setId(null);
-        // Todo cadastro é USUARIO (ADMIN não se cria por aqui) e começa ATIVO.
         usuario.setPerfil(Perfil.USUARIO);
         usuario.setStatus(StatusUsuario.ATIVO);
         usuario.setSenhaHash(passwordEncoder.encode(usuario.getSenha()));
         return repositorio.save(usuario);
     }
 
-    // Atualiza só os dados pessoais. Documento, tipo de documento, perfil e status não mudam por aqui.
+    // atualiza os dados do usuário
     @PutMapping("/{id}")
     public Usuario atualizar(@PathVariable Long id, @Valid @RequestBody Usuario dados,
             @AuthenticationPrincipal Usuario logado) {
@@ -95,7 +93,7 @@ public class UsuarioRecurso {
         return repositorio.save(usuario);
     }
 
-    // Exclusão lógica: a conta fica INATIVA, nada é apagado.
+    // marca a conta como inativa
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void excluir(@PathVariable Long id, @AuthenticationPrincipal Usuario logado) {

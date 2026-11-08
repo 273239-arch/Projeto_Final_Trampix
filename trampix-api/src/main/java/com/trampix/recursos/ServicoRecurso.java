@@ -13,9 +13,8 @@ import org.springframework.web.server.ResponseStatusException;
 import com.trampix.entidades.enums.StatusServico;
 import com.trampix.repositorios.ServicoRepositorio;
 
-// Busca pública de serviços (sem token). Só mostra serviços ATIVOS.
-// O cadastro do primeiro serviço está em PrestadorRecurso.
-// TODO(próxima etapa): POST/PUT/DELETE de serviço para quem já é prestador; filtros por cidade/UF e preço.
+// busca de serviços
+// TODO: cadastrar, editar e excluir serviço; filtros por cidade e preço
 @RestController
 @RequestMapping("/servicos")
 public class ServicoRecurso {
@@ -26,7 +25,7 @@ public class ServicoRecurso {
         this.repositorio = repositorio;
     }
 
-    // GET /servicos ou GET /servicos?categoriaId=3
+    // lista os serviços ativos (filtro opcional por categoria)
     @GetMapping
     public List<ServicoResposta> listar(@RequestParam(required = false) Long categoriaId) {
         var servicos = categoriaId == null

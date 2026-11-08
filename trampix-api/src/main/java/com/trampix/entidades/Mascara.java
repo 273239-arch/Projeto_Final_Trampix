@@ -1,6 +1,6 @@
 package com.trampix.entidades;
 
-// Tira a máscara de CPF, CNPJ, CEP e telefone: o banco guarda só dígitos.
+// tira a máscara e deixa só os dígitos
 final class Mascara {
 
     private Mascara() {

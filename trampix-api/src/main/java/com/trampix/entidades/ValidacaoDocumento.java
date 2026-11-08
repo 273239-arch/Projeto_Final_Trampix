@@ -8,12 +8,10 @@ import org.hibernate.validator.spi.group.DefaultGroupSequenceProvider;
 import com.trampix.entidades.enums.Perfil;
 import com.trampix.entidades.enums.TipoDocumento;
 
-// Escolhe as validações do documento conforme o usuário:
-// - documento e tipoDocumento são obrigatórios para USUARIO (não para o ADMIN de sistema);
-// - vale só @CPF ou só @CNPJ, conforme o tipoDocumento.
+// escolhe as validações do documento (CPF ou CNPJ)
 public class ValidacaoDocumento implements DefaultGroupSequenceProvider<Usuario> {
 
-    // Grupos de validação usados em Usuario.documento e Usuario.tipoDocumento.
+    // grupos de validação
     public interface Obrigatorio {
     }
 
@@ -26,7 +24,7 @@ public class ValidacaoDocumento implements DefaultGroupSequenceProvider<Usuario>
     @Override
     public List<Class<?>> getValidationGroups(Class<?> klass, Usuario usuario) {
         List<Class<?>> grupos = new ArrayList<>();
-        grupos.add(Usuario.class); // o grupo padrão da própria classe
+        grupos.add(Usuario.class); // grupo padrão
         if (usuario == null) {
             return grupos;
         }

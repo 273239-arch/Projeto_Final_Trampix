@@ -10,8 +10,7 @@ public interface CategoriaRepositorio extends JpaRepository<Categoria, Long> {
 
     List<Categoria> findByAtivaTrue();
 
-    // Nome único dentro do mesmo pai. Para categorias raiz usa as versões "IsNull",
-    // porque o UNIQUE do MySQL não barra dois NULL iguais.
+    // verifica nome repetido no mesmo pai
     boolean existsByCategoriaPaiIdAndNomeIgnoreCase(Long categoriaPaiId, String nome);
 
     boolean existsByCategoriaPaiIsNullAndNomeIgnoreCase(String nome);

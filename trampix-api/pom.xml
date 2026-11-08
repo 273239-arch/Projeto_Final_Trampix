@@ -33,8 +33,7 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
-		<!-- Spring Security + validação de token JWT (traz o BCrypt e a biblioteca Nimbus,
-		     que gera e confere os tokens). -->
+		<!-- Spring Security com JWT -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>

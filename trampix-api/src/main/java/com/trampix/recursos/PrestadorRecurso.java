@@ -34,14 +34,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-// Decisão: o usuário vira prestador ao cadastrar o primeiro serviço.
-// Este recurso cria, numa só transação, o prestador_perfil e esse primeiro serviço.
-// Exige token. Só o próprio usuário (ou um ADMIN) vê o perfil de prestador ou torna a conta {usuarioId} prestadora.
+// cria o perfil de prestador com o primeiro serviço
 @RestController
 @RequestMapping("/usuarios/{usuarioId}/prestador")
 public class PrestadorRecurso {
 
-    // Corpo do POST: dados do perfil de prestador + o primeiro serviço.
+    // dados do perfil e do primeiro serviço
     public record TornarPrestadorRequisicao(
             @Size(max = 1000) String biografia,
             @Min(0) Integer raioAtendimentoKm,

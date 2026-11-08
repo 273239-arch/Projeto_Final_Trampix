@@ -18,10 +18,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-// Catálogo independente de categorias. Uma categoria com "pai" é uma subcategoria.
-// O nome é único dentro do mesmo pai: "Pintura" pode existir em "Reformas" e em "Artes".
-// Atenção: no MySQL, NULL não conta como repetido no UNIQUE, então a unicidade das
-// categorias raiz (sem pai) é conferida no CategoriaRecurso.
+// categoria de serviço (pode ter categoria pai)
 @Entity
 @Table(name = "categoria", uniqueConstraints = @UniqueConstraint(
         name = "uk_categoria_pai_nome", columnNames = { "categoria_pai_id", "nome" }))
@@ -48,7 +45,7 @@ public class Categoria {
     @JoinColumn(name = "categoria_pai_id")
     private Categoria categoriaPai;
 
-    // Exclusão lógica: serviços antigos continuam apontando para a categoria.
+    // false quando a categoria é excluída
     @Column(nullable = false)
     private boolean ativa = true;
 }

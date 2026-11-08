@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-// Lê trampix.cors.origens do application.properties (lista separada por vírgula).
+// configurações do CORS
 @ConfigurationProperties(prefix = "trampix.cors")
 public record CorsPropriedades(List<String> origens) {
 }

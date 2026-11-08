@@ -5,12 +5,12 @@ import java.time.Duration;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-// Lê trampix.jwt.segredo e trampix.jwt.expiracao do application.properties.
+// configurações do JWT
 @ConfigurationProperties(prefix = "trampix.jwt")
 public record JwtPropriedades(String segredo, Duration expiracao) {
 
     public JwtPropriedades {
-        // HS256 exige chave de pelo menos 256 bits (32 bytes). Falha logo na subida se for curta.
+        // confere o segredo e a validade
         if (segredo == null || segredo.getBytes(StandardCharsets.UTF_8).length < 32) {
             throw new IllegalStateException("trampix.jwt.segredo precisa ter pelo menos 32 caracteres");
         }

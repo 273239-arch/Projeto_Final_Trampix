@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 import com.trampix.entidades.Usuario;
 
-// Gera o token JWT do login. A conferência do token fica com o Spring Security (SegurancaConfig).
+// gera o token JWT
 @Component
 public class TokenServico {
 
@@ -33,7 +33,7 @@ public class TokenServico {
         Instant expiraEm = agora.plus(propriedades.expiracao());
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer(EMISSOR)
-                .subject(usuario.getId().toString()) // "sub" = id do usuário
+                .subject(usuario.getId().toString()) // id do usuário
                 .issuedAt(agora)
                 .expiresAt(expiraEm)
                 .claim("perfil", usuario.getPerfil().name())

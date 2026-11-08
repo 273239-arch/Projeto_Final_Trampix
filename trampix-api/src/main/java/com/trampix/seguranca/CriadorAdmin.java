@@ -15,9 +15,7 @@ import com.trampix.entidades.enums.Perfil;
 import com.trampix.entidades.enums.StatusUsuario;
 import com.trampix.repositorios.UsuarioRepositorio;
 
-// Ao subir a aplicação: se não existir nenhum ADMIN, cria um com o e-mail e a senha
-// das variáveis TRAMPIX_ADMIN_EMAIL e TRAMPIX_ADMIN_SENHA (via application.properties).
-// O ADMIN de sistema não tem documento (CPF/CNPJ). A senha nunca aparece no log.
+// cria o ADMIN inicial ao subir a aplicação
 @Component
 public class CriadorAdmin implements ApplicationRunner {
 
@@ -56,7 +54,7 @@ public class CriadorAdmin implements ApplicationRunner {
             log.error("TRAMPIX_ADMIN_SENHA deve ter entre 8 e 72 caracteres: ADMIN não criado.");
             return;
         }
-        // Não promove uma conta comum que já use esse e-mail: quem a criou conhece a senha dela.
+        // não usa e-mail que já tem conta
         if (repositorio.existsByEmail(email)) {
             log.error("Já existe uma conta comum com o e-mail {}: ADMIN não criado. Use outro e-mail.", email);
             return;

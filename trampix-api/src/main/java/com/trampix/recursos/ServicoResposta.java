@@ -10,8 +10,7 @@ import com.trampix.entidades.Usuario;
 import com.trampix.entidades.enums.StatusServico;
 import com.trampix.entidades.enums.TipoCobranca;
 
-// JSON público de um serviço. Mostra só um resumo do prestador: documento, e-mail,
-// telefone e endereço completo do usuário NÃO saem aqui (LGPD).
+// dados do serviço devolvidos no JSON
 public record ServicoResposta(
         Long id,
         String titulo,

@@ -19,7 +19,7 @@ import com.trampix.repositorios.CategoriaRepositorio;
 
 import jakarta.validation.Valid;
 
-// GET é público. Criar, alterar e excluir: só ADMIN (regra na SegurancaConfig).
+// endpoints de categoria
 @RestController
 @RequestMapping("/categorias")
 public class CategoriaRecurso {
@@ -30,7 +30,7 @@ public class CategoriaRecurso {
         this.repositorio = repositorio;
     }
 
-    // Lista só as ativas: é o catálogo que o front exibe.
+    // lista as categorias ativas
     @GetMapping
     public List<Categoria> listar() {
         return repositorio.findByAtivaTrue();
@@ -67,7 +67,7 @@ public class CategoriaRecurso {
         return repositorio.save(categoria);
     }
 
-    // Exclusão lógica: serviços antigos continuam apontando para a categoria.
+    // marca a categoria como inativa
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void excluir(@PathVariable Long id) {
@@ -76,7 +76,7 @@ public class CategoriaRecurso {
         repositorio.save(categoria);
     }
 
-    // O JSON manda só {"categoriaPai": {"id": 1}}; aqui buscamos a categoria real.
+    // busca a categoria pai pelo id
     private Categoria resolverPai(Categoria pai, Long idAtual) {
         if (pai == null || pai.getId() == null) {
             return null;
@@ -88,8 +88,7 @@ public class CategoriaRecurso {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "categoria pai não encontrada"));
     }
 
-    // Nome único dentro do mesmo pai (idAtual = null no cadastro). Raiz é tratada à parte
-    // porque o UNIQUE (categoria_pai_id, nome) do MySQL deixa passar dois NULL iguais.
+    // verifica se já existe o nome no mesmo pai
     private boolean nomeRepetido(String nome, Categoria pai, Long idAtual) {
         if (pai == null) {
             return idAtual == null

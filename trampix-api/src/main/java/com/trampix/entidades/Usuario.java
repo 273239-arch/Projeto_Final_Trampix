@@ -56,28 +56,25 @@ public class Usuario {
     @Column(nullable = false, length = 120)
     private String nome;
 
-    // Login é por e-mail (decisão fechada). Guardado em minúsculas: o login não diferencia maiúsculas.
+    // e-mail usado no login
     @NotBlank
     @Email
     @Size(max = 160)
     @Column(nullable = false, unique = true, length = 160)
     private String email;
 
-    // Só o hash BCrypt vai para o banco. Nunca sai no JSON.
+    // hash da senha
     @JsonIgnore
     @Column(name = "senha_hash", nullable = false, length = 100)
     private String senhaHash;
 
-    // Senha em texto puro: só chega na requisição, não é gravada nem devolvida.
+    // senha recebida na requisição
     @Transient
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Size(min = 8, max = 72, message = "a senha deve ter entre 8 e 72 caracteres")
     private String senha;
 
-    // Só dígitos (o setter tira a máscara). CPF tem 11 dígitos e CNPJ tem 14.
-    // @CPF ou @CNPJ confere os dígitos verificadores, conforme o tipoDocumento
-    // (quem escolhe qual dos dois vale é a classe ValidacaoDocumento).
-    // Obrigatório para USUARIO. O ADMIN de sistema (criado pelo CriadorAdmin) não tem documento.
+    // CPF ou CNPJ, só dígitos
     @NotBlank(groups = ValidacaoDocumento.Obrigatorio.class)
     @Pattern(regexp = "\\d{11}|\\d{14}", message = "documento deve ter 11 (CPF) ou 14 (CNPJ) dígitos")
     @CPF(groups = ValidacaoDocumento.Cpf.class, message = "CPF inválido")
@@ -91,7 +88,6 @@ public class Usuario {
     @Column(name = "tipo_documento", length = 10)
     private TipoDocumento tipoDocumento;
 
-    // Opcional: não se aplica a quem se cadastra com CNPJ.
     @Past
     @Column(name = "data_nascimento")
     private LocalDate dataNascimento;
@@ -100,8 +96,6 @@ public class Usuario {
     @Column(length = 11)
     private String telefone;
 
-    // USUARIO para todo cadastro. Ser prestador não é perfil: é ter um prestador_perfil.
-    // Só leitura no JSON: ninguém se cadastra como ADMIN.
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
@@ -113,7 +107,7 @@ public class Usuario {
     @Column(nullable = false, length = 20)
     private StatusUsuario status = StatusUsuario.ATIVO;
 
-    // Endereço separado em campos para o filtro por localização funcionar.
+    // endereço
     @Pattern(regexp = "\\d{8}", message = "CEP deve ter 8 dígitos")
     @Column(length = 8)
     private String cep;
@@ -142,7 +136,7 @@ public class Usuario {
     @Column(length = 2)
     private String uf;
 
-    // Recuperação de senha ("Esqueci minha senha"). Guarda só o hash do token.
+    // recuperação de senha
     @JsonIgnore
     @Column(name = "token_recuperacao_hash", length = 64)
     private String tokenRecuperacaoHash;
@@ -159,7 +153,7 @@ public class Usuario {
     @Column(name = "atualizado_em", nullable = false)
     private LocalDateTime atualizadoEm;
 
-    // Os setters abaixo tiram pontos, traços e parênteses: o banco guarda só dígitos.
+    // setters que tiram a máscara
     public void setDocumento(String documento) {
         this.documento = Mascara.soDigitos(documento);
     }

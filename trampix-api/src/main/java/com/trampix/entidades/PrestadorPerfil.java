@@ -23,9 +23,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-// Dados extras de quem presta serviço (1:1 com usuario).
-// Decisão: o usuário vira prestador ao cadastrar o primeiro serviço; é aí que esta linha nasce
-// (POST /usuarios/{id}/prestador). O documento (CPF ou CNPJ) fica em Usuario, e o preço, em Servico.
+// dados de quem presta serviço
 @Entity
 @Table(name = "prestador_perfil")
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
@@ -54,7 +52,7 @@ public class PrestadorPerfil {
     @Column(name = "agenda_cheia", nullable = false)
     private boolean agendaCheia = false;
 
-    // Selo "perfil verificado". Só um ADMIN muda (fluxo "Validar documentos", ainda sem RF).
+    // selo de perfil verificado
     @Column(nullable = false)
     private boolean verificado = false;
 

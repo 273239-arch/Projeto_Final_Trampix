@@ -6,13 +6,13 @@ import org.springframework.web.server.ResponseStatusException;
 import com.trampix.entidades.Usuario;
 import com.trampix.entidades.enums.Perfil;
 
-// Regras de "quem pode mexer em quê" usadas pelos recursos.
+// regras de permissão
 public final class Permissoes {
 
     private Permissoes() {
     }
 
-    // Só o próprio usuário ou um ADMIN. Senão, 403.
+    // só o próprio usuário ou ADMIN
     public static void exigirProprioOuAdmin(Usuario logado, Long usuarioId) {
         boolean proprio = logado.getId().equals(usuarioId);
         boolean admin = logado.getPerfil() == Perfil.ADMIN;

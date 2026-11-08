@@ -10,7 +10,7 @@ import com.trampix.entidades.enums.StatusServico;
 
 public interface ServicoRepositorio extends JpaRepository<Servico, Long> {
 
-    // @EntityGraph carrega prestador, usuário e categoria na mesma consulta (evita N+1).
+    // carrega junto prestador, usuário e categoria
     @EntityGraph(attributePaths = { "prestador", "prestador.usuario", "categoria" })
     List<Servico> findByStatus(StatusServico status);
 

@@ -14,9 +14,7 @@ import com.trampix.entidades.Usuario;
 import com.trampix.entidades.enums.StatusUsuario;
 import com.trampix.repositorios.UsuarioRepositorio;
 
-// Depois que o Spring confere a assinatura e a validade do token, esta classe busca o usuário
-// do "sub" no banco. Assim, nos recursos, @AuthenticationPrincipal Usuario logado é o usuário.
-// Se a conta não estiver mais ATIVA (excluída, suspensa, banida), o token deixa de valer (401).
+// converte o token no usuário logado
 @Component
 public class ConversorJwtUsuario implements Converter<Jwt, AbstractAuthenticationToken> {
 
@@ -37,7 +35,7 @@ public class ConversorJwtUsuario implements Converter<Jwt, AbstractAuthenticatio
         Usuario usuario = repositorio.findById(id)
                 .filter(u -> u.getStatus() == StatusUsuario.ATIVO)
                 .orElseThrow(() -> new InvalidBearerTokenException("usuário não encontrado ou inativo"));
-        // O perfil vem do banco, não do token: se um ADMIN for rebaixado, vale na hora.
+        // permissão pelo perfil do usuário
         var permissoes = List.of(new SimpleGrantedAuthority("ROLE_" + usuario.getPerfil().name()));
         return UsernamePasswordAuthenticationToken.authenticated(usuario, jwt, permissoes);
     }

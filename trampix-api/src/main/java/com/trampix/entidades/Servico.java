@@ -32,9 +32,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-// Tela "Cadastrar Novo Serviço" (Figma, Desktop 7). As mídias ficarão na tabela arquivo.
-// TODO(etapa contratação): ninguém contrata o próprio serviço. Ao criar a contratação,
-// recusar (422) quando contratacao.cliente.id == servico.prestador.usuario.id.
+// serviço oferecido pelo prestador
 @Entity
 @Table(name = "servico")
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
@@ -52,7 +50,6 @@ public class Servico {
     @JoinColumn(name = "prestador_id", nullable = false)
     private PrestadorPerfil prestador;
 
-    // Normalmente uma subcategoria.
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "categoria_id", nullable = false)

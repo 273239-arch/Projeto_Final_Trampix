@@ -20,10 +20,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-// Login por e-mail e senha. Devolve o token JWT, que vai no header
-// "Authorization: Bearer <token>" das próximas requisições.
-// TODO(recuperação de senha): POST /auth/esqueci-senha e /auth/redefinir-senha
-// usando token_recuperacao_hash e token_recuperacao_expira_em de Usuario.
+// login com e-mail e senha
+// TODO: recuperação de senha
 @RestController
 @RequestMapping("/auth")
 public class AuthRecurso {
@@ -31,7 +29,6 @@ public class AuthRecurso {
     public record LoginRequisicao(@NotBlank @Email String email, @NotBlank String senha) {
     }
 
-    // "usuario" sai sem senha e sem hash (Usuario já esconde os dois no JSON).
     public record LoginResposta(String token, String tipo, Instant expiraEm, Usuario usuario) {
     }
 
@@ -48,7 +45,7 @@ public class AuthRecurso {
     @PostMapping("/login")
     public LoginResposta login(@Valid @RequestBody LoginRequisicao requisicao) {
         String email = requisicao.email().trim().toLowerCase(Locale.ROOT);
-        // Mesma mensagem para e-mail inexistente e senha errada: não revela quem tem conta.
+        // busca o usuário e confere a senha
         Usuario usuario = repositorio.findByEmail(email)
                 .filter(u -> passwordEncoder.matches(requisicao.senha(), u.getSenhaHash()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "e-mail ou senha inválidos"));
