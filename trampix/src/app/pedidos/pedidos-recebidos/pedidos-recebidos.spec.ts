@@ -27,7 +27,6 @@ describe('PedidosRecebidos', () => {
 
   const responder = async (pedidos: Contratacao[]) => {
     http.expectOne(`${environment.apiUrl}/contratacoes?papel=prestador`).flush(pedidos);
-    http.expectOne(`${environment.apiUrl}/servicos`).flush([]);
     await fixture.whenStable();
   };
 
@@ -68,16 +67,65 @@ describe('PedidosRecebidos', () => {
     expect(tela().textContent).toContain('entre 10 e 500 caracteres');
   });
 
-  it('aceita: concluir fica bloqueado antes da data de início e mostra o telefone do cliente', async () => {
+  it('pendente: sem endereço, mostra só cidade e UF do cliente', async () => {
+    await responder([pedidoDeTeste({})]);
+    expect(tela().textContent).toContain('Olinda - PE');
+    expect(tela().textContent).not.toContain('Endereço');
+  });
+
+  it('aceita: concluir fica bloqueado antes da data de início e mostra telefone e endereço do cliente', async () => {
     await responder([
       pedidoDeTeste({
         status: 'ACEITA',
-        cliente: { id: 2, nome: 'Maria', cidade: 'Olinda', uf: 'PE', telefone: '(81) 98888-7777' },
+        cliente: {
+          id: 2,
+          nome: 'Maria',
+          cidade: 'Olinda',
+          uf: 'PE',
+          telefone: '(81) 98888-7777',
+          endereco: {
+            logradouro: 'Rua do Sol',
+            numero: '120',
+            complemento: 'Apto 3',
+            bairro: 'Carmo',
+            cidade: 'Olinda',
+            uf: 'PE',
+            cep: '53020-000',
+          },
+        },
       }),
     ]);
     expect(botao('Concluir')!.disabled).toBe(true);
     expect(botao('Cancelar')).toBeTruthy();
-    expect(tela().textContent).toContain('(81) 98888-7777');
-    expect(tela().textContent).toContain('Olinda - PE');
+    const texto = tela().textContent!;
+    expect(texto).toContain('(81) 98888-7777');
+    expect(texto).toContain('Endereço');
+    expect(texto).toContain('Rua do Sol, 120 - Apto 3 - Carmo');
+    expect(texto).toContain('Olinda - PE · CEP 53020-000');
+  });
+
+  it('concluída: endereço sem complemento', async () => {
+    await responder([
+      pedidoDeTeste({
+        status: 'CONCLUIDA',
+        cliente: {
+          id: 2,
+          nome: 'Maria',
+          cidade: 'Olinda',
+          uf: 'PE',
+          telefone: null,
+          endereco: {
+            logradouro: 'Rua do Sol',
+            numero: '120',
+            complemento: null,
+            bairro: 'Carmo',
+            cidade: 'Olinda',
+            uf: 'PE',
+            cep: '53020-000',
+          },
+        },
+      }),
+    ]);
+    expect(tela().textContent).toContain('Rua do Sol, 120 - Carmo');
   });
 });

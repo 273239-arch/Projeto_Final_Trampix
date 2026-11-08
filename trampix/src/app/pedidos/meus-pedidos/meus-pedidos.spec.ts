@@ -26,19 +26,6 @@ describe('MeusPedidos', () => {
 
   const responder = async (pedidos: Contratacao[]) => {
     http.expectOne(`${environment.apiUrl}/contratacoes?papel=cliente`).flush(pedidos);
-    http.expectOne(`${environment.apiUrl}/servicos`).flush([
-      {
-        id: 7,
-        titulo: 'Pintura de sala',
-        preco: 300,
-        tipoCobranca: 'POR_DIA',
-        status: 'ATIVO',
-        categoria: { id: 2, nome: 'Pintor' },
-        subcategoria: { id: 8, nome: 'Paredes' },
-        prestador: { id: 1, usuarioId: 9, nome: 'José', cidade: 'Recife', uf: 'PE', verificado: false },
-        criadoEm: '2026-11-01T10:00:00',
-      },
-    ]);
     await fixture.whenStable();
   };
 
@@ -49,6 +36,8 @@ describe('MeusPedidos', () => {
 
   it('mostra serviço, categoria, prestador e o botão de cancelar', async () => {
     await responder([pedidoDeTeste({})]);
+    // A categoria vem no próprio pedido, sem GET /servicos
+    http.expectNone(`${environment.apiUrl}/servicos`);
     const texto = tela().textContent!;
     expect(texto).toContain('Pendente');
     expect(texto).toContain('Pintura de sala');
@@ -70,7 +59,7 @@ describe('MeusPedidos', () => {
       .forEach((b) => b.textContent!.includes('Aceitar contraproposta') && b.click());
     http
       .expectOne(`${environment.apiUrl}/contratacoes/1/aceitar-contraproposta`)
-      .flush(pedidoDeTeste({ status: 'ACEITA', prestador: { id: 9, nome: 'José', cidade: null, uf: null, telefone: '(81) 99999-0000' } }));
+      .flush(pedidoDeTeste({ status: 'ACEITA', prestador: { id: 9, nome: 'José', cidade: null, uf: null, telefone: '(81) 99999-0000', endereco: null } }));
     await fixture.whenStable();
     expect(tela().textContent).toContain('(81) 99999-0000');
   });

@@ -14,7 +14,7 @@
   } @else {
     <div class="lista">
       @for (pedido of pedidos(); track pedido.id) {
-        <app-cartao-pedido [pedido]="pedido" papel="cliente" [servico]="servicos().get(pedido.servico.id)">
+        <app-cartao-pedido [pedido]="pedido" papel="cliente">
           @switch (pedido.status) {
             @case ('CONTRAPROPOSTA') {
               @if (painelAberto(pedido.id, 'recusar')) {

@@ -82,6 +82,10 @@ public class Contratacao {
     @Column(name = "preco_combinado", nullable = false, precision = 10, scale = 2)
     private BigDecimal precoCombinado;
 
+    // dias atendidos pelo prestador no período
+    @Column(name = "dias_contados")
+    private Integer diasContados;
+
     @Size(max = 500)
     @Column(name = "motivo_contraproposta", length = 500)
     private String motivoContraproposta;

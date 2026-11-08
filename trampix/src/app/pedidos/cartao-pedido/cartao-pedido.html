@@ -9,20 +9,29 @@
   <h2 class="titulo">
     <a [routerLink]="['/servicos', pedido().servico.id]">{{ pedido().servico.titulo }}</a>
   </h2>
-  @if (servico(); as s) {
-    <p class="categoria">{{ s.categoria.nome }} › {{ s.subcategoria.nome }}</p>
-  }
+  <p class="categoria">{{ pedido().servico.categoria.nome }} › {{ pedido().servico.subcategoria.nome }}</p>
 
   <dl class="dados">
     <div>
       <dt>{{ papel() === 'cliente' ? 'Prestador' : 'Cliente' }}</dt>
       <dd>
         {{ outraParte().nome }}
-        @if (outraParte().cidade) {
+        <!-- Sem endereço liberado, fica só cidade e UF -->
+        @if (!endereco() && outraParte().cidade) {
           <span class="suave">· {{ outraParte().cidade }}{{ outraParte().uf ? ' - ' + outraParte().uf : '' }}</span>
         }
       </dd>
     </div>
+    <!-- O back só manda o endereço ao prestador, em ACEITA ou CONCLUIDA -->
+    @if (endereco(); as e) {
+      <div class="endereco">
+        <dt>Endereço</dt>
+        <dd>
+          {{ e.rua }}
+          <span class="suave">{{ e.cidade }}</span>
+        </dd>
+      </div>
+    }
     <!-- O back só manda o telefone depois de aceita -->
     @if (outraParte().telefone) {
       <div>

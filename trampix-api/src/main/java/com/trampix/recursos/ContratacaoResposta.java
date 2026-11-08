@@ -22,6 +22,7 @@ public record ContratacaoResposta(
         LocalTime horaFim,
         String observacao,
         BigDecimal precoCombinado,
+        Integer diasContados,
         String motivoContraproposta,
         LocalDateTime contrapropostaEm,
         String motivoRecusa,
@@ -32,7 +33,8 @@ public record ContratacaoResposta(
         LocalDateTime criadoEm,
         LocalDateTime atualizadoEm) {
 
-    public record ServicoResumo(Long id, String titulo, TipoCobranca tipoCobranca, Resumo categoria, Resumo subcategoria) {
+    public record ServicoResumo(Long id, String titulo, TipoCobranca tipoCobranca, BigDecimal preco, Resumo categoria,
+            Resumo subcategoria) {
     }
 
     public record ParteResumo(Long id, String nome, String cidade, String uf, String telefone, Endereco endereco) {
@@ -59,11 +61,12 @@ public record ContratacaoResposta(
                 contratacao.getHoraFim(),
                 contratacao.getObservacao(),
                 contratacao.getPrecoCombinado(),
+                contratacao.getDiasContados(),
                 contratacao.getMotivoContraproposta(),
                 contratacao.getContrapropostaEm(),
                 contratacao.getMotivoRecusa(),
                 expiraEm(contratacao),
-                new ServicoResumo(servico.getId(), servico.getTitulo(), servico.getTipoCobranca(),
+                new ServicoResumo(servico.getId(), servico.getTitulo(), servico.getTipoCobranca(), servico.getPreco(),
                         new Resumo(servico.getCategoria().getId(), servico.getCategoria().getNome()),
                         new Resumo(servico.getSubcategoria().getId(), servico.getSubcategoria().getNome())),
                 parte(cliente, aceita && logadoEhPrestador, aceita && logadoEhPrestador),

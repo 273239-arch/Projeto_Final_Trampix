@@ -88,7 +88,7 @@ public class ContratacaoRecurso {
     // resposta do histórico
     public record HistoricoResposta(Long id, StatusContratacao statusAnterior, StatusContratacao statusNovo,
             AutorResumo autor, LocalDate dataInicio, LocalDate dataFim, LocalTime horaInicio, LocalTime horaFim,
-            BigDecimal precoCombinado, String motivo, LocalDateTime criadoEm) {
+            BigDecimal precoCombinado, Integer diasContados, String motivo, LocalDateTime criadoEm) {
 
         public record AutorResumo(Long id, String nome) {
         }
@@ -98,7 +98,7 @@ public class ContratacaoRecurso {
                     : new AutorResumo(h.getAutor().getId(), h.getAutor().getNome());
             return new HistoricoResposta(h.getId(), h.getStatusAnterior(), h.getStatusNovo(), autor,
                     h.getDataInicio(), h.getDataFim(), h.getHoraInicio(), h.getHoraFim(), h.getPrecoCombinado(),
-                    h.getMotivo(), h.getCriadoEm());
+                    h.getDiasContados(), h.getMotivo(), h.getCriadoEm());
         }
     }
 
@@ -107,10 +107,6 @@ public class ContratacaoRecurso {
 
         boolean porHora() {
             return horaInicio != null;
-        }
-
-        long dias() {
-            return ChronoUnit.DAYS.between(dataInicio, dataFim) + 1;
         }
 
         long horas() {
@@ -159,7 +155,7 @@ public class ContratacaoRecurso {
         Periodo periodo = montarPeriodo(servico, requisicao.dataInicio(), requisicao.dataFim(),
                 requisicao.horaInicio(), requisicao.quantidadeHoras());
         exigirDataValida(periodo);
-        exigirDisponibilidade(servico, periodo);
+        int dias = diasAtendidos(servico, periodo);
         exigirSemConflito(servico, periodo, 0L);
 
         Contratacao contratacao = new Contratacao();
@@ -168,7 +164,8 @@ public class ContratacaoRecurso {
         contratacao.setStatus(StatusContratacao.PENDENTE);
         aplicarPeriodo(contratacao, periodo);
         contratacao.setObservacao(requisicao.observacao());
-        contratacao.setPrecoCombinado(calcularPreco(servico, periodo));
+        contratacao.setDiasContados(dias);
+        contratacao.setPrecoCombinado(calcularPreco(servico, periodo, dias));
         repositorio.save(contratacao);
         historicoRepositorio.save(new ContratacaoHistorico(contratacao, logado, null, null));
         return ContratacaoResposta.de(contratacao, logado);
@@ -252,12 +249,13 @@ public class ContratacaoRecurso {
         Periodo periodo = montarPeriodo(servico, requisicao.dataInicio(), requisicao.dataFim(),
                 requisicao.horaInicio(), requisicao.quantidadeHoras());
         exigirDataValida(periodo);
-        exigirDisponibilidade(servico, periodo);
+        int dias = diasAtendidos(servico, periodo);
         exigirSemConflito(servico, periodo, contratacao.getId());
 
         aplicarPeriodo(contratacao, periodo);
+        contratacao.setDiasContados(dias);
         contratacao.setPrecoCombinado(requisicao.precoCombinado() != null
-                ? requisicao.precoCombinado() : calcularPreco(servico, periodo));
+                ? requisicao.precoCombinado() : calcularPreco(servico, periodo, dias));
         contratacao.setMotivoContraproposta(requisicao.motivo());
         contratacao.setContrapropostaEm(LocalDateTime.now());
         return mudarStatus(contratacao, StatusContratacao.CONTRAPROPOSTA, logado, requisicao.motivo());
@@ -275,7 +273,7 @@ public class ContratacaoRecurso {
         travarPrestador(contratacao);
         Periodo periodo = periodoDe(contratacao);
         exigirDataValida(periodo);
-        exigirDisponibilidade(contratacao.getServico(), periodo);
+        diasAtendidos(contratacao.getServico(), periodo);
         exigirSemConflito(contratacao.getServico(), periodo, contratacao.getId());
         return mudarStatus(contratacao, StatusContratacao.ACEITA, logado, null);
     }
@@ -367,10 +365,10 @@ public class ContratacaoRecurso {
     }
 
     // calcula o preço pelo tipo de cobrança
-    private static BigDecimal calcularPreco(Servico servico, Periodo periodo) {
+    private static BigDecimal calcularPreco(Servico servico, Periodo periodo, int dias) {
         return switch (servico.getTipoCobranca()) {
             case POR_HORA -> servico.getPreco().multiply(BigDecimal.valueOf(periodo.horas()));
-            case POR_DIA -> servico.getPreco().multiply(BigDecimal.valueOf(periodo.dias()));
+            case POR_DIA -> servico.getPreco().multiply(BigDecimal.valueOf(dias));
             case POR_TRABALHO, POR_M2 -> servico.getPreco();
         };
     }
@@ -386,8 +384,8 @@ public class ContratacaoRecurso {
         }
     }
 
-    // confere se o pedido cabe na disponibilidade do prestador
-    private void exigirDisponibilidade(Servico servico, Periodo periodo) {
+    // confere a disponibilidade e devolve quantos dias do período o prestador atende
+    private int diasAtendidos(Servico servico, Periodo periodo) {
         List<Disponibilidade> janelas = disponibilidadeRepositorio.findByPrestadorId(servico.getPrestador().getId());
         if (periodo.porHora()) {
             DiaSemana dia = DiaSemana.de(periodo.dataInicio().getDayOfWeek());
@@ -398,17 +396,22 @@ public class ContratacaoRecurso {
                 throw regra("o prestador não atende neste horário: " + periodo.horaInicio() + "-"
                         + periodo.horaFim() + " precisa caber numa disponibilidade de " + dia);
             }
-            return;
+            return 1;
         }
         Set<DiaSemana> diasComJanela = janelas.stream().map(Disponibilidade::getDiaSemana)
                 .collect(Collectors.toSet());
-        for (LocalDate data = periodo.dataInicio(); !data.isAfter(periodo.dataFim())
-                && data.isBefore(periodo.dataInicio().plusDays(7)); data = data.plusDays(1)) {
-            DiaSemana dia = DiaSemana.de(data.getDayOfWeek());
-            if (!diasComJanela.contains(dia)) {
-                throw regra("o prestador não atende em " + dia + " (" + data + ")");
+        // dias sem disponibilidade não contam
+        int dias = 0;
+        for (LocalDate data = periodo.dataInicio(); !data.isAfter(periodo.dataFim()); data = data.plusDays(1)) {
+            if (diasComJanela.contains(DiaSemana.de(data.getDayOfWeek()))) {
+                dias++;
             }
         }
+        if (dias == 0) {
+            throw regra("o prestador não atende em nenhum dia do período de " + periodo.dataInicio() + " a "
+                    + periodo.dataFim() + "; escolha datas em que ele tenha disponibilidade");
+        }
+        return dias;
     }
 
     // confere se já tem contratação aceita que cruza com o pedido

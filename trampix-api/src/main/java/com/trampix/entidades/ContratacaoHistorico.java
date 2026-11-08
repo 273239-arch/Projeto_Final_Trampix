@@ -78,6 +78,9 @@ public class ContratacaoHistorico {
     @Column(name = "preco_combinado", nullable = false, precision = 10, scale = 2, updatable = false)
     private BigDecimal precoCombinado;
 
+    @Column(name = "dias_contados", updatable = false)
+    private Integer diasContados;
+
     @Column(length = 500, updatable = false)
     private String motivo;
 
@@ -97,6 +100,7 @@ public class ContratacaoHistorico {
         this.horaInicio = contratacao.getHoraInicio();
         this.horaFim = contratacao.getHoraFim();
         this.precoCombinado = contratacao.getPrecoCombinado();
+        this.diasContados = contratacao.getDiasContados();
         this.motivo = motivo;
     }
 }

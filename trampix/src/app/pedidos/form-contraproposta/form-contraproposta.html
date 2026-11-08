@@ -72,12 +72,7 @@
           formControlName="precoCombinado"
           [placeholder]="(pedido().precoCombinado | number: '1.2-2') ?? ''"
         />
-        <mat-hint>
-          Em branco: calculado pelo preço do serviço
-          @if (servico(); as s) {
-            ({{ s.preco | currency: 'BRL' }})
-          }
-        </mat-hint>
+        <mat-hint>Em branco: calculado pelo preço do serviço</mat-hint>
         <mat-error>{{ erro('precoCombinado') }}</mat-error>
       </mat-form-field>
     </div>

@@ -14,7 +14,7 @@
   } @else {
     <div class="lista">
       @for (pedido of pedidos(); track pedido.id) {
-        <app-cartao-pedido [pedido]="pedido" papel="prestador" [servico]="servicos().get(pedido.servico.id)">
+        <app-cartao-pedido [pedido]="pedido" papel="prestador">
           @if (pedido.status === 'PENDENTE') {
             @if (painelAberto(pedido.id, 'recusar')) {
               <div class="painel">
@@ -46,7 +46,6 @@
             } @else if (painelAberto(pedido.id, 'contrapropor')) {
               <app-form-contraproposta
                 [pedido]="pedido"
-                [servico]="servicos().get(pedido.servico.id)"
                 (enviada)="contrapropostaEnviada($event)"
                 (fechar)="fecharPainel()"
               />

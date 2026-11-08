@@ -3,9 +3,7 @@ import { FormControl, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable, Subscription } from 'rxjs';
 import { Contratacao, Papel } from '../core/models/contratacao';
-import { Servico } from '../core/models/servico';
 import { ContratacaoApi } from '../core/services/contratacao-api';
-import { ServicoApi } from '../core/services/servico-api';
 
 export type Painel = 'cancelar' | 'recusar' | 'contrapropor';
 
@@ -16,16 +14,12 @@ export abstract class ListaPedidos implements OnInit {
   protected abstract readonly papel: Papel;
 
   protected readonly contratacaoApi = inject(ContratacaoApi);
-  private readonly servicoApi = inject(ServicoApi);
   private readonly snackBar = inject(MatSnackBar);
   private carregamento?: Subscription;
 
   protected readonly pedidos = signal<Contratacao[]>([]);
   protected readonly carregando = signal(false);
   protected readonly erro = signal(false);
-
-  // A contratação traz só id, título e cobrança do serviço: categoria e subcategoria vêm de GET /servicos.
-  protected readonly servicos = signal<ReadonlyMap<number, Servico>>(new Map());
 
   // Pedido com ação em andamento (desabilita os botões dele).
   protected readonly processando = signal<number | null>(null);
@@ -41,7 +35,6 @@ export abstract class ListaPedidos implements OnInit {
 
   ngOnInit(): void {
     this.carregar();
-    this.carregarServicos();
   }
 
   carregar(): void {
@@ -102,13 +95,6 @@ export abstract class ListaPedidos implements OnInit {
         this.snackBar.open(sucesso, 'Fechar', { duration: 4000 });
       },
       error: () => this.processando.set(null),
-    });
-  }
-
-  private carregarServicos(): void {
-    this.servicoApi.listar({}, true).subscribe({
-      next: (lista) => this.servicos.set(new Map(lista.map((s) => [s.id, s]))),
-      error: () => undefined,
     });
   }
 }

@@ -3,7 +3,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Contraproposta, Contratacao } from '../../core/models/contratacao';
-import { Servico } from '../../core/models/servico';
 import { ContratacaoApi } from '../../core/services/contratacao-api';
 import { aplicarErrosDoBack, mensagemDoCampo } from '../../core/utils/erros-formulario';
 import {
@@ -37,8 +36,6 @@ export class FormContraproposta implements OnInit {
   private readonly snackBar = inject(MatSnackBar);
 
   readonly pedido = input.required<Contratacao>();
-  // Serviço completo, só para mostrar o preço unitário (pode faltar).
-  readonly servico = input<Servico | undefined>(undefined);
   readonly enviada = output<Contratacao>();
   readonly fechar = output<void>();
 
