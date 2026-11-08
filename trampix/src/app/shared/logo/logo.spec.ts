@@ -14,7 +14,11 @@ describe('Logo', () => {
     await fixture.whenStable();
   });
 
-  it('mostra "Trampix"', () => {
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Trampix');
+  it('mostra a imagem do logo e o texto "Trampix"', () => {
+    const tela = fixture.nativeElement as HTMLElement;
+    const imagem = tela.querySelector('img');
+    expect(imagem?.getAttribute('src')).toBe('logo-trampix.png');
+    expect(imagem?.getAttribute('alt')).toBe('Trampix');
+    expect(tela.querySelector('.texto')?.textContent).toBe('Trampix');
   });
 });
