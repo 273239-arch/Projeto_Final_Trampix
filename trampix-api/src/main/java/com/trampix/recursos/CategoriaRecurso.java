@@ -59,26 +59,22 @@ public class CategoriaRecurso {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CategoriaResposta cadastrar(@Valid @RequestBody Categoria categoria) {
-        Categoria pai = resolverPai(categoria.getCategoriaPai(), null);
-        if (nomeRepetido(categoria.getNome(), pai, null)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "já existe uma categoria com esse nome neste nível");
+        if (repositorio.existsByNomeIgnoreCase(categoria.getNome())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "já existe uma categoria com esse nome");
         }
         categoria.setId(null);
         categoria.setAtiva(true);
-        categoria.setCategoriaPai(pai);
         return resposta(repositorio.save(categoria));
     }
 
     @PutMapping("/{id}")
     public CategoriaResposta atualizar(@PathVariable Long id, @Valid @RequestBody Categoria dados) {
         Categoria categoria = buscarOu404(id);
-        Categoria pai = resolverPai(dados.getCategoriaPai(), id);
-        if (nomeRepetido(dados.getNome(), pai, id)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "já existe uma categoria com esse nome neste nível");
+        if (repositorio.existsByNomeIgnoreCaseAndIdNot(dados.getNome(), id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "já existe uma categoria com esse nome");
         }
         categoria.setNome(dados.getNome());
         categoria.setDescricao(dados.getDescricao());
-        categoria.setCategoriaPai(pai);
         return resposta(repositorio.save(categoria));
     }
 
@@ -89,30 +85,6 @@ public class CategoriaRecurso {
         Categoria categoria = buscarOu404(id);
         categoria.setAtiva(false);
         repositorio.save(categoria);
-    }
-
-    // busca a categoria pai pelo id
-    private Categoria resolverPai(Categoria pai, Long idAtual) {
-        if (pai == null || pai.getId() == null) {
-            return null;
-        }
-        if (pai.getId().equals(idAtual)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "uma categoria não pode ser pai dela mesma");
-        }
-        return repositorio.findById(pai.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "categoria pai não encontrada"));
-    }
-
-    // verifica se já existe o nome no mesmo pai
-    private boolean nomeRepetido(String nome, Categoria pai, Long idAtual) {
-        if (pai == null) {
-            return idAtual == null
-                    ? repositorio.existsByCategoriaPaiIsNullAndNomeIgnoreCase(nome)
-                    : repositorio.existsByCategoriaPaiIsNullAndNomeIgnoreCaseAndIdNot(nome, idAtual);
-        }
-        return idAtual == null
-                ? repositorio.existsByCategoriaPaiIdAndNomeIgnoreCase(pai.getId(), nome)
-                : repositorio.existsByCategoriaPaiIdAndNomeIgnoreCaseAndIdNot(pai.getId(), nome, idAtual);
     }
 
     // monta a resposta com as subcategorias ativas

@@ -22,7 +22,8 @@ public record ServicoResposta(
         Resumo categoria,
         Resumo subcategoria,
         PrestadorResumo prestador,
-        LocalDateTime criadoEm) {
+        LocalDateTime criadoEm,
+        LocalDateTime atualizadoEm) {
 
     public record Resumo(Long id, String nome) {
     }
@@ -46,6 +47,7 @@ public record ServicoResposta(
                 new Resumo(subcategoria.getId(), subcategoria.getNome()),
                 new PrestadorResumo(prestador.getId(), usuario.getId(), usuario.getNome(),
                         usuario.getCidade(), usuario.getUf(), prestador.isVerificado()),
-                servico.getCriadoEm());
+                servico.getCriadoEm(),
+                servico.getAtualizadoEm());
     }
 }

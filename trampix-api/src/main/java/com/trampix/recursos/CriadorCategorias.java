@@ -91,7 +91,7 @@ public class CriadorCategorias implements CommandLineRunner {
         int novasSubcategorias = 0;
         for (Cat padrao : PADROES) {
             // busca a categoria pelo nome ou cria
-            Categoria categoria = categoriaRepositorio.findFirstByCategoriaPaiIsNullAndNomeIgnoreCase(padrao.nome())
+            Categoria categoria = categoriaRepositorio.findFirstByNomeIgnoreCase(padrao.nome())
                     .orElse(null);
             if (categoria == null) {
                 categoria = new Categoria();

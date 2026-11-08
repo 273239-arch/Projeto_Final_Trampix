@@ -21,5 +21,14 @@ public interface ServicoRepositorio extends JpaRepository<Servico, Long> {
             order by s.id""")
     List<Servico> filtrar(StatusServico status, Long categoriaId, Long subcategoriaId);
 
-    List<Servico> findByPrestadorId(Long prestadorId);
+    // serviços do prestador em qualquer status
+    @EntityGraph(attributePaths = { "prestador", "prestador.usuario", "categoria", "subcategoria" })
+    List<Servico> findByPrestadorIdOrderById(Long prestadorId);
+
+    // confere se o prestador já tem serviço ativo na subcategoria
+    @Query("""
+            select count(s) > 0 from Servico s
+            where s.prestador.id = :prestadorId and s.subcategoria.id = :subcategoriaId
+              and s.status = :status and (:idIgnorado is null or s.id <> :idIgnorado)""")
+    boolean existeNaSubcategoria(Long prestadorId, Long subcategoriaId, StatusServico status, Long idIgnorado);
 }

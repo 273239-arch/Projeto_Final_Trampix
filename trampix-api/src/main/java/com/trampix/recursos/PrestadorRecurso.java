@@ -1,7 +1,5 @@
 package com.trampix.recursos;
 
-import java.math.BigDecimal;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,17 +17,13 @@ import com.trampix.entidades.Servico;
 import com.trampix.entidades.Subcategoria;
 import com.trampix.entidades.Usuario;
 import com.trampix.entidades.enums.StatusUsuario;
-import com.trampix.entidades.enums.TipoCobranca;
 import com.trampix.repositorios.PrestadorPerfilRepositorio;
 import com.trampix.repositorios.ServicoRepositorio;
 import com.trampix.repositorios.UsuarioRepositorio;
 import com.trampix.seguranca.Permissoes;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -42,18 +36,7 @@ public class PrestadorRecurso {
     public record TornarPrestadorRequisicao(
             @Size(max = 1000) String biografia,
             @Min(0) Integer raioAtendimentoKm,
-            @NotNull @Valid PrimeiroServico servico) {
-    }
-
-    public record PrimeiroServico(
-            Long subcategoriaId,
-            Long categoriaId,
-            @Size(max = 40) String novaSubcategoria,
-            @NotBlank @Size(max = 120) String titulo,
-            @NotBlank @Size(max = 2000) String descricao,
-            @NotNull @DecimalMin(value = "0.01", message = "o preço deve ser maior que zero")
-            @Digits(integer = 8, fraction = 2) BigDecimal preco,
-            @NotNull TipoCobranca tipoCobranca) {
+            @NotNull @Valid ServicoRequisicao servico) {
     }
 
     private final UsuarioRepositorio usuarioRepositorio;
@@ -90,7 +73,7 @@ public class PrestadorRecurso {
         if (prestadorRepositorio.existsByUsuarioId(usuarioId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "este usuário já é prestador");
         }
-        PrimeiroServico dados = requisicao.servico();
+        ServicoRequisicao dados = requisicao.servico();
         Subcategoria subcategoria = criadorSubcategoria.paraServico(dados.subcategoriaId(), dados.categoriaId(),
                 dados.novaSubcategoria(), logado);
 
@@ -102,12 +85,7 @@ public class PrestadorRecurso {
 
         Servico servico = new Servico();
         servico.setPrestador(prestador);
-        servico.setCategoria(subcategoria.getCategoria());
-        servico.setSubcategoria(subcategoria);
-        servico.setTitulo(dados.titulo());
-        servico.setDescricao(dados.descricao());
-        servico.setPreco(dados.preco());
-        servico.setTipoCobranca(dados.tipoCobranca());
+        dados.aplicar(servico, subcategoria);
         return ServicoResposta.de(servicoRepositorio.save(servico));
     }
 }

@@ -4,12 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
@@ -18,10 +15,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-// categoria de serviço (pode ter categoria pai)
+// categoria de serviço
 @Entity
 @Table(name = "categoria", uniqueConstraints = @UniqueConstraint(
-        name = "uk_categoria_pai_nome", columnNames = { "categoria_pai_id", "nome" }))
+        name = "uk_categoria_nome", columnNames = "nome"))
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 @Getter
 @Setter
@@ -40,10 +37,6 @@ public class Categoria {
     @Size(max = 255)
     @Column(length = 255)
     private String descricao;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "categoria_pai_id")
-    private Categoria categoriaPai;
 
     // false quando a categoria é excluída
     @Column(nullable = false)

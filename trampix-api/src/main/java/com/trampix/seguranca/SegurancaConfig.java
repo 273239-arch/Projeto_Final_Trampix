@@ -50,6 +50,8 @@ public class SegurancaConfig {
                 .authorizeHttpRequests(rotas -> rotas
                         .requestMatchers(HttpMethod.POST, "/usuarios", "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/categorias", "/categorias/**").permitAll()
+                        // serviços do prestador logado
+                        .requestMatchers(HttpMethod.GET, "/servicos/meus").authenticated()
                         .requestMatchers(HttpMethod.GET, "/servicos", "/servicos/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/usuarios/*/disponibilidades").permitAll()
                         // prestador ou ADMIN cria subcategoria
