@@ -78,8 +78,8 @@ public class ContratacaoHistorico {
     @Column(name = "preco_combinado", nullable = false, precision = 10, scale = 2, updatable = false)
     private BigDecimal precoCombinado;
 
-    @Column(length = 1000, updatable = false)
-    private String mensagem;
+    @Column(length = 500, updatable = false)
+    private String motivo;
 
     @CreationTimestamp
     @Column(name = "criado_em", nullable = false, updatable = false)
@@ -87,7 +87,7 @@ public class ContratacaoHistorico {
 
     // monta a linha com os dados atuais da contratação
     public ContratacaoHistorico(Contratacao contratacao, Usuario autor, StatusContratacao statusAnterior,
-            String mensagem) {
+            String motivo) {
         this.contratacao = contratacao;
         this.autor = autor;
         this.statusAnterior = statusAnterior;
@@ -97,6 +97,6 @@ public class ContratacaoHistorico {
         this.horaInicio = contratacao.getHoraInicio();
         this.horaFim = contratacao.getHoraFim();
         this.precoCombinado = contratacao.getPrecoCombinado();
-        this.mensagem = mensagem;
+        this.motivo = motivo;
     }
 }

@@ -48,6 +48,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -78,7 +79,7 @@ public class ContratacaoRecurso {
             @Min(1) @Max(24) Integer quantidadeHoras,
             @DecimalMin(value = "0.01", message = "o preço deve ser maior que zero")
             @Digits(integer = 8, fraction = 2) BigDecimal precoCombinado,
-            @Size(max = 500) String mensagem) {
+            @NotBlank @Size(min = 10, max = 500, message = "o motivo deve ter entre 10 e 500 caracteres") String motivo) {
     }
 
     public record RecusaRequisicao(@Size(max = 500) String motivo) {
@@ -87,7 +88,7 @@ public class ContratacaoRecurso {
     // resposta do histórico
     public record HistoricoResposta(Long id, StatusContratacao statusAnterior, StatusContratacao statusNovo,
             AutorResumo autor, LocalDate dataInicio, LocalDate dataFim, LocalTime horaInicio, LocalTime horaFim,
-            BigDecimal precoCombinado, String mensagem, LocalDateTime criadoEm) {
+            BigDecimal precoCombinado, String motivo, LocalDateTime criadoEm) {
 
         public record AutorResumo(Long id, String nome) {
         }
@@ -97,7 +98,7 @@ public class ContratacaoRecurso {
                     : new AutorResumo(h.getAutor().getId(), h.getAutor().getNome());
             return new HistoricoResposta(h.getId(), h.getStatusAnterior(), h.getStatusNovo(), autor,
                     h.getDataInicio(), h.getDataFim(), h.getHoraInicio(), h.getHoraFim(), h.getPrecoCombinado(),
-                    h.getMensagem(), h.getCriadoEm());
+                    h.getMotivo(), h.getCriadoEm());
         }
     }
 
@@ -169,7 +170,7 @@ public class ContratacaoRecurso {
         contratacao.setObservacao(requisicao.observacao());
         contratacao.setPrecoCombinado(calcularPreco(servico, periodo));
         repositorio.save(contratacao);
-        historicoRepositorio.save(new ContratacaoHistorico(contratacao, logado, null, requisicao.observacao()));
+        historicoRepositorio.save(new ContratacaoHistorico(contratacao, logado, null, null));
         return ContratacaoResposta.de(contratacao, logado);
     }
 
@@ -257,9 +258,9 @@ public class ContratacaoRecurso {
         aplicarPeriodo(contratacao, periodo);
         contratacao.setPrecoCombinado(requisicao.precoCombinado() != null
                 ? requisicao.precoCombinado() : calcularPreco(servico, periodo));
-        contratacao.setMensagemContraproposta(requisicao.mensagem());
+        contratacao.setMotivoContraproposta(requisicao.motivo());
         contratacao.setContrapropostaEm(LocalDateTime.now());
-        return mudarStatus(contratacao, StatusContratacao.CONTRAPROPOSTA, logado, requisicao.mensagem());
+        return mudarStatus(contratacao, StatusContratacao.CONTRAPROPOSTA, logado, requisicao.motivo());
     }
 
     @PostMapping("/{id}/aceitar-contraproposta")
@@ -455,11 +456,11 @@ public class ContratacaoRecurso {
 
     // muda o status e salva no histórico
     private ContratacaoResposta mudarStatus(Contratacao contratacao, StatusContratacao novo, Usuario logado,
-            String mensagem) {
+            String motivo) {
         StatusContratacao anterior = contratacao.getStatus();
         contratacao.setStatus(novo);
         repositorio.saveAndFlush(contratacao);
-        historicoRepositorio.save(new ContratacaoHistorico(contratacao, logado, anterior, mensagem));
+        historicoRepositorio.save(new ContratacaoHistorico(contratacao, logado, anterior, motivo));
         return ContratacaoResposta.de(contratacao, logado);
     }
 

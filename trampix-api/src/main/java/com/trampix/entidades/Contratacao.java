@@ -83,8 +83,8 @@ public class Contratacao {
     private BigDecimal precoCombinado;
 
     @Size(max = 500)
-    @Column(name = "mensagem_contraproposta", length = 500)
-    private String mensagemContraproposta;
+    @Column(name = "motivo_contraproposta", length = 500)
+    private String motivoContraproposta;
 
     @Column(name = "contraproposta_em")
     private LocalDateTime contrapropostaEm;
